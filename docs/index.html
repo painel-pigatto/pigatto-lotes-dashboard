@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Painel Comercial — Produtos a Vencer</title>
+<meta name="description" content="Dashboard público e anonimizado de lotes a vencer/vencidos e vendas dos últimos 12 meses — Grupo Pigatto." />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<!-- Nota: sem atributo "integrity" (SRI) de propósito — não foi possível validar o hash
+     exato nesta sessão (sem acesso de rede ao cdnjs para conferir). Se quiser reforçar a
+     segurança do carregamento deste script, gere o hash você mesmo (ver README.md) e
+     adicione integrity="sha384-..." crossorigin="anonymous" na tag acima. -->
+
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page-plane: #f9f9f7;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --gridline: #e1e0d9;
+    --border: rgba(11,11,11,0.10);
+    --navy: #1f3a5f;
+    --navy-ink: #ffffff;
+
+    --blue: #2a78d6;
+    --blue-bg: #eaf2fc;
+    --blue-text: #1c5cab;
+
+    --red: #d03b3b;
+    --red-bg: #fbe9e9;
+
+    --orange-bg: #fff4e0;
+    --orange-text: #8a5a00;
+
+    --aqua: #1baf7a;
+    --aqua-bg: #e6f7f1;
+    --aqua-text: #127a57;
+
+    --violet: #4a3aa7;
+    --violet-bg: #eeecfa;
+
+    --cat-1: #2a78d6; /* blue */
+    --cat-2: #eb6834; /* orange */
+    --cat-3: #1baf7a; /* aqua */
+    --cat-4: #eda100; /* yellow */
+    --cat-5: #e87ba4; /* magenta */
+    --cat-6: #008300; /* green */
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-1: #1a1a19;
+      --page-plane: #0d0d0d;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --gridline: #2c2c2a;
+      --border: rgba(255,255,255,0.10);
+      --blue-bg: #132235;
+      --blue-text: #86b6ef;
+      --red-bg: #2e1616;
+      --orange-bg: #2e2211;
+      --orange-text: #e3b25a;
+      --aqua-bg: #0f2a21;
+      --aqua-text: #5cd6a7;
+      --violet-bg: #211c3c;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --page-plane: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --gridline: #2c2c2a;
+    --border: rgba(255,255,255,0.10);
+    --blue-bg: #132235;
+    --blue-text: #86b6ef;
+    --red-bg: #2e1616;
+    --orange-bg: #2e2211;
+    --orange-text: #e3b25a;
+    --aqua-bg: #0f2a21;
+    --aqua-text: #5cd6a7;
+    --violet-bg: #211c3c;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  header {
+    background: var(--navy);
+    color: var(--navy-ink);
+    padding: 20px 16px;
+  }
+  header h1 { margin: 0 0 4px; font-size: 20px; }
+  header p { margin: 0; font-size: 13px; opacity: 0.85; }
+  .theme-toggle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: var(--navy-ink);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .wrap { position: relative; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+  .banner-exemplo {
+    background: var(--orange-bg);
+    color: var(--orange-text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .kpi .label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .kpi .value { font-size: 26px; font-weight: 700; }
+  .kpi.blue { background: var(--blue-bg); }
+  .kpi.blue .value { color: var(--blue-text); }
+  .kpi.red { background: var(--red-bg); }
+  .kpi.red .value { color: var(--red); }
+  .kpi.orange { background: var(--orange-bg); }
+  .kpi.orange .value { color: var(--orange-text); }
+  .kpi.aqua { background: var(--aqua-bg); }
+  .kpi.aqua .value { color: var(--aqua-text); }
+  .kpi.violet { background: var(--violet-bg); }
+  .kpi.violet .value { color: var(--violet); }
+
+  .charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .card h2 { font-size: 13px; margin: 0 0 10px; color: var(--text-secondary); font-weight: 700; }
+  .card canvas { max-height: 280px; }
+
+  .table-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .table-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .table-controls input, .table-controls select {
+    font: inherit;
+    font-size: 13px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--gridline);
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--gridline); }
+  th { color: var(--text-secondary); font-weight: 700; cursor: pointer; white-space: nowrap; }
+  tr.vencido td.situacao { color: var(--red); font-weight: 600; }
+  tr.urgente td.situacao { color: var(--orange-text); font-weight: 600; }
+
+  footer { max-width: 1200px; margin: 0 auto; padding: 8px 16px 32px; color: var(--text-muted); font-size: 12px; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Painel Comercial — Produtos a Vencer</h1>
+      <p id="subtitulo">Lotes a vencer e vencidos cruzados com vendas dos últimos 12 meses. Dados agregados — sem informação individual de cliente.</p>
+      <button class="theme-toggle" id="themeToggle" type="button">Alternar tema</button>
+    </header>
+    <main>
+      <div id="bannerExemplo" class="banner-exemplo" hidden>
+        Estes são dados de exemplo. O GitHub Action ainda não rodou com as credenciais do Omie configuradas — veja o README do repositório.
+      </div>
+
+      <section class="kpis" id="kpis"></section>
+
+      <section class="charts">
+        <div class="card">
+          <h2>Lotes a vencer por família</h2>
+          <canvas id="chartFamilia"></canvas>
+        </div>
+        <div class="card">
+          <h2>Distribuição por urgência</h2>
+          <canvas id="chartUrgencia"></canvas>
+        </div>
+        <div class="card">
+          <h2>Top 10 produtos por quantidade vendida (12 meses)</h2>
+          <canvas id="chartProdutos"></canvas>
+        </div>
+      </section>
+
+      <section class="table-card">
+        <div class="table-controls">
+          <input type="search" id="filtroProduto" placeholder="Buscar produto ou lote…" />
+          <select id="filtroFamilia"><option value="">Todas as famílias</option></select>
+          <select id="filtroSituacao">
+            <option value="">Todas as situações</option>
+            <option value="Vencido">Vencido</option>
+            <option value="≤ 30 dias">≤ 30 dias</option>
+            <option value="31–60 dias">31–60 dias</option>
+            <option value="61–90 dias">61–90 dias</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="tabelaLotes">
+            <thead>
+              <tr>
+                <th data-key="produto">Produto</th>
+                <th data-key="familia">Família</th>
+                <th data-key="lote">Lote</th>
+                <th data-key="fabricacao">Fabricação</th>
+                <th data-key="validade">Validade</th>
+                <th data-key="dias_restantes">Dias restantes</th>
+                <th data-key="situacao">Situação</th>
+                <th data-key="saldo">Saldo</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaLotesBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <footer>
+      Painel gerado automaticamente a partir do Omie (<span id="geradoEm">—</span>). Dados de clientes (nome, telefone, e-mail) não aparecem aqui — ficam só na planilha interna de uso do time comercial.
+      Os e-mails quinzenais de alerta continuam sendo enviados normalmente para avisos urgentes; este painel é a visão completa, atualizada automaticamente.
+    </footer>
+  </div>
+
+<script>
+const CORES_FAMILIA = {
+  "Adesivos Estruturais": "#2a78d6",
+  "Chemlok": "#eb6834",
+  "Marbocote": "#1baf7a",
+  "Bio-Chem": "#eda100",
+  "Silquim": "#e87ba4",
+  "Outras": "#008300",
+};
+const CORES_URGENCIA = {
+  "Vencido": "#d03b3b",
+  "≤ 30 dias": "#fab219",
+  "31–60 dias": "#ec835a",
+  "61–90 dias": "#0ca30c",
+};
+
+function temaAtual() {
+  const stamp = document.documentElement.getAttribute("data-theme");
+  if (stamp) return stamp;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function corTexto() {
+  return getComputedStyle(document.documentElement).getPropertyValue("--text-secondary").trim() || "#52514e";
+}
+function corGrade() {
+  return getComputedStyle(document.documentElement).getPropertyValue("--gridline").trim() || "#e1e0d9";
+}
+
+function aplicarTemaSalvo() {
+  try {
+    const salvo = localStorage.getItem("painel-tema");
+    if (salvo === "light" || salvo === "dark") {
+      document.documentElement.setAttribute("data-theme", salvo);
+    }
+  } catch (e) { /* localStorage pode falhar em alguns navegadores — tudo bem seguir no tema padrão */ }
+}
+aplicarTemaSalvo();
+
+document.getElementById("themeToggle").addEventListener("click", () => {
+  const atual = temaAtual();
+  const novo = atual === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", novo);
+  try { localStorage.setItem("painel-tema", novo); } catch (e) { /* ignorar */ }
+  redesenharGraficos();
+});
+
+let dadosGlobais = null;
+let graficos = {};
+
+function formatarNumero(n) {
+  return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(n);
+}
+
+function montarKpis(kpis) {
+  const defs = [
+    { chave: "lotes_a_vencer_90d", label: "Lotes a vencer (90 dias)", classe: "blue" },
+    { chave: "lotes_vencidos", label: "Lotes já vencidos", classe: "red" },
+    { chave: "urgencia_30d", label: "Urgência ≤ 30 dias", classe: "orange" },
+    { chave: "saldo_total_em_risco", label: "Saldo total em risco (un)", classe: "blue" },
+    { chave: "qtd_vendida_12m", label: "Qtd. vendida últ. 12 meses", classe: "aqua" },
+    { chave: "clientes_candidatos_12m", label: "Clientes candidatos (12 meses)", classe: "violet" },
+  ];
+  const el = document.getElementById("kpis");
+  el.innerHTML = defs.map(d => `
+    <div class="kpi ${d.classe}">
+      <div class="label">${d.label}</div>
+      <div class="value">${formatarNumero(kpis[d.chave] ?? 0)}</div>
+    </div>
+  `).join("");
+}
+
+function graficoBarras(ctx, labels, valores, cores, horizontal) {
+  return new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ data: valores, backgroundColor: cores, borderRadius: 4, maxBarThickness: 36 }],
+    },
+    options: {
+      indexAxis: horizontal ? "y" : "x",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: corTexto() }, grid: { color: corGrade() } },
+        y: { ticks: { color: corTexto() }, grid: { color: corGrade() } },
+      },
+    },
+  });
+}
+
+function destruirGraficos() {
+  Object.values(graficos).forEach(g => g && g.destroy());
+  graficos = {};
+}
+
+function redesenharGraficos() {
+  if (!dadosGlobais) return;
+  if (typeof Chart === "undefined") {
+    console.warn("Chart.js não carregou (ex.: bloqueio de rede ao CDN) — gráficos ficarão ocultos, mas KPIs e tabela continuam normalmente.");
+    document.querySelectorAll(".charts .card canvas").forEach(c => {
+      c.insertAdjacentHTML("afterend", '<p style="color:var(--text-muted);font-size:12px">Gráfico indisponível (falha ao carregar Chart.js).</p>');
+      c.remove();
+    });
+    return;
+  }
+  destruirGraficos();
+  const d = dadosGlobais;
+
+  graficos.familia = graficoBarras(
+    document.getElementById("chartFamilia"),
+    d.por_familia.map(x => x.familia),
+    d.por_familia.map(x => x.qtd_lotes),
+    d.por_familia.map(x => CORES_FAMILIA[x.familia] || "#2a78d6"),
+    false
+  );
+
+  graficos.urgencia = graficoBarras(
+    document.getElementById("chartUrgencia"),
+    d.por_urgencia.map(x => x.situacao),
+    d.por_urgencia.map(x => x.qtd_lotes),
+    d.por_urgencia.map(x => CORES_URGENCIA[x.situacao] || "#d03b3b"),
+    false
+  );
+
+  const top10 = d.top_produtos.slice(0, 10);
+  graficos.produtos = graficoBarras(
+    document.getElementById("chartProdutos"),
+    top10.map(x => x.produto.length > 28 ? x.produto.slice(0, 26) + "…" : x.produto),
+    top10.map(x => x.qtd_vendida_12m),
+    top10.map(() => "#2a78d6"),
+    true
+  );
+}
+
+function classeLinha(situacao) {
+  if (situacao === "Vencido") return "vencido";
+  if (situacao === "≤ 30 dias") return "urgente";
+  return "";
+}
+
+let ordenacao = { chave: "dias_restantes", asc: true };
+
+function linhasFiltradas() {
+  const termo = document.getElementById("filtroProduto").value.trim().toLowerCase();
+  const familia = document.getElementById("filtroFamilia").value;
+  const situacao = document.getElementById("filtroSituacao").value;
+  let linhas = dadosGlobais.lotes.filter(l => {
+    if (familia && l.familia !== familia) return false;
+    if (situacao && l.situacao !== situacao) return false;
+    if (termo && !(`${l.produto} ${l.lote}`.toLowerCase().includes(termo))) return false;
+    return true;
+  });
+  linhas.sort((a, b) => {
+    const va = a[ordenacao.chave], vb = b[ordenacao.chave];
+    const cmp = typeof va === "number" ? va - vb : String(va).localeCompare(String(vb), "pt-BR");
+    return ordenacao.asc ? cmp : -cmp;
+  });
+  return linhas;
+}
+
+function renderTabela() {
+  const linhas = linhasFiltradas();
+  const corpo = document.getElementById("tabelaLotesBody");
+  corpo.innerHTML = linhas.map(l => `
+    <tr class="${classeLinha(l.situacao)}">
+      <td>${l.produto}</td>
+      <td>${l.familia}</td>
+      <td>${l.lote ?? ""}</td>
+      <td>${l.fabricacao ?? ""}</td>
+      <td>${l.validade ?? ""}</td>
+      <td>${l.dias_restantes}</td>
+      <td class="situacao">${l.situacao}</td>
+      <td>${formatarNumero(l.saldo)}</td>
+    </tr>
+  `).join("");
+}
+
+function montarFiltros(lotes) {
+  const familias = [...new Set(lotes.map(l => l.familia))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const sel = document.getElementById("filtroFamilia");
+  familias.forEach(f => {
+    const opt = document.createElement("option");
+    opt.value = f; opt.textContent = f;
+    sel.appendChild(opt);
+  });
+}
+
+document.querySelectorAll("#tabelaLotes th").forEach(th => {
+  th.addEventListener("click", () => {
+    const chave = th.dataset.key;
+    if (ordenacao.chave === chave) ordenacao.asc = !ordenacao.asc;
+    else ordenacao = { chave, asc: true };
+    renderTabela();
+  });
+});
+["filtroProduto", "filtroFamilia", "filtroSituacao"].forEach(id => {
+  document.getElementById(id).addEventListener("input", renderTabela);
+});
+
+async function carregar() {
+  const resp = await fetch("./data.json", { cache: "no-store" });
+  const dados = await resp.json();
+  dadosGlobais = dados;
+
+  document.getElementById("bannerExemplo").hidden = !dados.exemplo;
+  document.getElementById("geradoEm").textContent = new Date(dados.gerado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+
+  montarKpis(dados.kpis);
+  montarFiltros(dados.lotes);
+  try { redesenharGraficos(); } catch (e) { console.error("Falha ao desenhar gráficos:", e); }
+  try { renderTabela(); } catch (e) { console.error("Falha ao montar tabela:", e); }
+}
+
+carregar().catch(err => {
+  console.error("Falha ao carregar data.json:", err);
+  document.getElementById("kpis").innerHTML = `<p style="color:var(--red)">Não foi possível carregar data.json: ${err}</p>`;
+});
+</script>
+</body>
+</html>

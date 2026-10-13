@@ -1,0 +1,37 @@
+name: Atualizar Dashboard de Lotes a Vencer
+
+on:
+  schedule:
+    # 08:00 horário de Brasília (UTC-3) todo dia = 11:00 UTC
+    - cron: '0 11 * * *'
+  workflow_dispatch: {}   # permite rodar manualmente em Actions > Run workflow
+
+permissions:
+  contents: write   # necessário para o passo de commit automático gravar docs/data.json
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependências
+        run: pip install -r scripts/requirements.txt
+
+      - name: Buscar dados no Omie e gerar docs/data.json
+        env:
+          OMIE_APP_KEY: ${{ secrets.OMIE_APP_KEY }}
+          OMIE_APP_SECRET: ${{ secrets.OMIE_APP_SECRET }}
+        run: python scripts/fetch_omie_data.py
+
+      - name: Publicar dados atualizados (commit automático)
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Atualiza dados do dashboard (automático)"
+          file_pattern: docs/data.json

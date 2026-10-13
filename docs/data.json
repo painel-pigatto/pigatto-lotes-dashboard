@@ -1,0 +1,43 @@
+{
+  "gerado_em": "2026-10-09T00:00:00Z",
+  "exemplo": true,
+  "janela_dias": 90,
+  "kpis": {
+    "lotes_a_vencer_90d": 36,
+    "lotes_vencidos": 14,
+    "urgencia_30d": 16,
+    "saldo_total_em_risco": 2496.95,
+    "qtd_vendida_12m": 19593.72,
+    "clientes_candidatos_12m": 102
+  },
+  "por_familia": [
+    { "familia": "Adesivos Estruturais", "qtd_lotes": 25 },
+    { "familia": "Chemlok", "qtd_lotes": 8 },
+    { "familia": "Marbocote", "qtd_lotes": 15 },
+    { "familia": "Bio-Chem", "qtd_lotes": 1 },
+    { "familia": "Silquim", "qtd_lotes": 1 },
+    { "familia": "Outras", "qtd_lotes": 0 }
+  ],
+  "por_urgencia": [
+    { "situacao": "Vencido", "qtd_lotes": 14 },
+    { "situacao": "≤ 30 dias", "qtd_lotes": 16 },
+    { "situacao": "31–60 dias", "qtd_lotes": 13 },
+    { "situacao": "61–90 dias", "qtd_lotes": 7 }
+  ],
+  "top_produtos": [
+    { "produto": "LORD ADESIVO LA 550 - KG", "qtd_vendida_12m": 2757.1 },
+    { "produto": "LORD 852/25 GB - BNG 490 ML/485 GR - C/ BICO MISTURADOR MFQX 10-24 T", "qtd_vendida_12m": 1683 },
+    { "produto": "LORD 406/19 BNG - 0,460 KG/375 ML - conteúdo", "qtd_vendida_12m": 889 },
+    { "produto": "LORD 410/19 BNG - 0,460 KG/375 ML - conteúdo", "qtd_vendida_12m": 612 },
+    { "produto": "MARBOCOTE CR8 - 01 LT - DESMOLDANTE SEMI PERMANENTE", "qtd_vendida_12m": 593 },
+    { "produto": "LORD FUSOR 2001/2002 HV BNG 0,890 KG", "qtd_vendida_12m": 416 },
+    { "produto": "MARBOCOTE 70 - 20 LT - DESMOLDANTE PARA ROTOMOLDAGEM", "qtd_vendida_12m": 407 },
+    { "produto": "LORD 810/20 - 45 ML C/ BICO MISTURADOR", "qtd_vendida_12m": 213 },
+    { "produto": "LORD LA 550/19 - BNG - 0,460 KG/ 375 ML - conteúdo", "qtd_vendida_12m": 159 },
+    { "produto": "LORD ADESIVO 852/25 BNG 45 ML C/BICO", "qtd_vendida_12m": 111 }
+  ],
+  "lotes": [
+    { "produto": "CHEMLOK 402 ADESIVO GL MT 3,6L", "familia": "Chemlok", "lote": "25100033", "fabricacao": "10/04/2025", "validade": "15/04/2026", "dias_restantes": -177, "situacao": "Vencido", "saldo": 3 },
+    { "produto": "LORD FUSOR 2001/2002 HV BNG 0,890 KG", "familia": "Adesivos Estruturais", "lote": "3023814", "fabricacao": "01/07/2026", "validade": "07/11/2026", "dias_restantes": 29, "situacao": "≤ 30 dias", "saldo": 131 }
+  ]
+}
