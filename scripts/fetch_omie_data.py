@@ -48,7 +48,7 @@ FAMILIAS_CONHECIDAS = [
     "Silquim",
 ]
 
-ORDEM_RISCO = ["Vencido", "Perda provável", "Risco parcial", "Sem giro", "Vende a tempo"]
+ORDEM_RISCO = ["Perda provável", "Risco parcial", "Sem giro", "Vende a tempo"]
 
 
 def omie_call(path: str, call: str, param: dict) -> dict:
@@ -181,9 +181,7 @@ def buscar_produto(n_cod_produto):
     return familia, unidade
 
 
-def classificar_risco(saldo: float, saldo_em_risco: float, vencido: bool, sem_giro: bool) -> str:
-    if vencido:
-        return "Vencido"
+def classificar_risco(saldo: float, saldo_em_risco: float, sem_giro: bool) -> str:
     if sem_giro:
         return "Sem giro"
     if saldo_em_risco <= 0:
@@ -199,7 +197,6 @@ def calcular_cobertura(lotes: list, qtd_por_produto: dict) -> None:
     cada lote deve vencer sem ser vendido. Supõe que os lotes de um mesmo
     produto saem na ordem de validade (o que vence antes sai antes) e que a
     capacidade de venda não usada até um lote vencer passa para o próximo.
-    Lotes já vencidos ficam inteiros em risco e não consomem capacidade.
     """
     por_produto: dict = {}
     for lote in lotes:
@@ -211,10 +208,7 @@ def calcular_cobertura(lotes: list, qtd_por_produto: dict) -> None:
         for lote in sorted(lotes_prod, key=lambda l: l["dias_restantes"]):
             saldo = float(lote["saldo"])
             lote["venda_media_dia"] = round(venda_dia, 3)
-            if lote["vencido"]:
-                lote["dias_para_vender"] = None
-                lote["saldo_em_risco"] = round(saldo, 2)
-            elif venda_dia <= 0:
+            if venda_dia <= 0:
                 lote["dias_para_vender"] = None
                 lote["saldo_em_risco"] = round(saldo, 2)
             else:
@@ -223,9 +217,7 @@ def calcular_cobertura(lotes: list, qtd_por_produto: dict) -> None:
                 lote["dias_para_vender"] = round((vendido_antes + saldo) / venda_dia)
                 lote["saldo_em_risco"] = round(saldo - vendido, 2)
                 vendido_antes += vendido
-            lote["risco"] = classificar_risco(
-                saldo, lote["saldo_em_risco"], lote["vencido"], venda_dia <= 0
-            )
+            lote["risco"] = classificar_risco(saldo, lote["saldo_em_risco"], venda_dia <= 0)
 
 
 def buscar_vendas_12_meses(produtos_n_cod: set):
@@ -280,7 +272,9 @@ def buscar_vendas_12_meses(produtos_n_cod: set):
 
 
 def montar_dashboard():
-    lotes = buscar_lotes()
+    # Lotes vencidos ficam fora do painel: são tratados pela operação no e-mail
+    # interno de vencidos, não pelo comercial.
+    lotes = [l for l in buscar_lotes() if not l["vencido"]]
 
     for lote in lotes:
         lote["familia"], lote["unidade"] = buscar_produto(lote["n_cod_produto"])
@@ -299,17 +293,16 @@ def montar_dashboard():
     calcular_cobertura(lotes, qtd_por_produto)
 
     # KPIs — só contagens de lotes: somar saldos misturaria kg, litros e bisnagas.
-    lotes_a_vencer_90d = [l for l in lotes if not l["vencido"]]
     contagem_risco = {r: 0 for r in ORDEM_RISCO}
     for lote in lotes:
         contagem_risco[lote["risco"]] += 1
     kpis = {
-        "lotes_a_vencer_90d": len(lotes_a_vencer_90d),
-        "lotes_vencidos": contagem_risco["Vencido"],
-        "urgencia_30d": len([l for l in lotes_a_vencer_90d if l["dias_restantes"] <= 30]),
+        "lotes_a_vencer_90d": len(lotes),
+        "urgencia_30d": len([l for l in lotes if l["dias_restantes"] <= 30]),
         "lotes_perda_provavel": contagem_risco["Perda provável"],
         "lotes_risco_parcial": contagem_risco["Risco parcial"],
         "lotes_sem_giro": contagem_risco["Sem giro"],
+        "lotes_vende_a_tempo": contagem_risco["Vende a tempo"],
     }
 
     # Por família
@@ -319,7 +312,7 @@ def montar_dashboard():
     por_familia = [{"familia": f, "qtd_lotes": contagem_familia[f]} for f in FAMILIAS_CONHECIDAS + ["Outras"]]
 
     # Por urgência
-    ordem_urgencia = ["Vencido", "≤ 30 dias", "31–60 dias", "61–90 dias"]
+    ordem_urgencia = ["≤ 30 dias", "31–60 dias", "61–90 dias"]
     contagem_urgencia = {u: 0 for u in ordem_urgencia}
     for lote in lotes:
         contagem_urgencia[lote["urgencia"]] += 1

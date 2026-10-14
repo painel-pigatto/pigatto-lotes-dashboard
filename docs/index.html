@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Painel Comercial — Produtos a Vencer</title>
-<meta name="description" content="Dashboard público e anonimizado de lotes a vencer/vencidos e vendas dos últimos 12 meses — Grupo Pigatto." />
+<meta name="description" content="Dashboard público e anonimizado de lotes a vencer em 90 dias e risco de perda pelo ritmo de vendas — Grupo Pigatto." />
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt" crossorigin="anonymous"></script>
 
 <style>
@@ -202,7 +202,7 @@
   <div class="wrap">
     <header>
       <h1>Painel Comercial — Produtos a Vencer</h1>
-      <p id="subtitulo">Lotes a vencer e vencidos, com a projeção de quanto deve vencer sem ser vendido no ritmo dos últimos 12 meses. Sem informação de cliente.</p>
+      <p id="subtitulo">Lotes que vencem nos próximos 90 dias, com a projeção de quanto deve vencer sem ser vendido no ritmo dos últimos 12 meses. Sem informação de cliente.</p>
       <button class="theme-toggle" id="themeToggle" type="button">Alternar tema</button>
     </header>
     <main>
@@ -233,14 +233,12 @@
           <select id="filtroFamilia"><option value="">Todas as famílias</option></select>
           <select id="filtroSituacao">
             <option value="">Todos os prazos</option>
-            <option value="Vencido">Vencido</option>
             <option value="≤ 30 dias">≤ 30 dias</option>
             <option value="31–60 dias">31–60 dias</option>
             <option value="61–90 dias">61–90 dias</option>
           </select>
           <select id="filtroRisco">
             <option value="">Todos os riscos</option>
-            <option value="Vencido">Vencido</option>
             <option value="Perda provável">Perda provável</option>
             <option value="Risco parcial">Risco parcial</option>
             <option value="Sem giro">Sem giro</option>
@@ -270,7 +268,7 @@
       </section>
     </main>
     <footer>
-      Painel gerado automaticamente a partir do Omie (<span id="geradoEm">—</span>). Dados de clientes (nome, telefone, e-mail) não aparecem aqui — ficam só na planilha interna de uso do time comercial.
+      Painel gerado automaticamente a partir do Omie (<span id="geradoEm">—</span>). Lotes já vencidos não aparecem aqui: são tratados pela operação. Dados de clientes (nome, telefone, e-mail) não aparecem aqui — ficam só na planilha interna de uso do time comercial.
       Os e-mails quinzenais de alerta continuam sendo enviados normalmente para avisos urgentes; este painel é a visão completa, atualizada automaticamente.
     </footer>
   </div>
@@ -284,20 +282,18 @@ const CORES_FAMILIA = {
   "Silquim": "#e87ba4",
   "Outras": "#008300",
 };
-const ORDEM_RISCO = ["Vencido", "Perda provável", "Risco parcial", "Sem giro", "Vende a tempo"];
+const ORDEM_RISCO = ["Perda provável", "Risco parcial", "Sem giro", "Vende a tempo"];
 const CORES_RISCO = {
-  "Vencido": "#d03b3b",
-  "Perda provável": "#ec835a",
+  "Perda provável": "#d03b3b",
   "Risco parcial": "#fab219",
   "Sem giro": "#4a3aa7",
   "Vende a tempo": "#1baf7a",
 };
 const CLASSE_RISCO = {
-  "Vencido": "vencido", "Perda provável": "perda", "Risco parcial": "parcial",
+  "Perda provável": "perda", "Risco parcial": "parcial",
   "Sem giro": "semgiro", "Vende a tempo": "ok",
 };
 const CORES_URGENCIA = {
-  "Vencido": "#d03b3b",
   "≤ 30 dias": "#fab219",
   "31–60 dias": "#ec835a",
   "61–90 dias": "#0ca30c",
@@ -344,11 +340,11 @@ function formatarNumero(n) {
 function montarKpis(kpis) {
   const defs = [
     { chave: "lotes_a_vencer_90d", label: "Lotes a vencer (90 dias)", classe: "blue" },
-    { chave: "lotes_vencidos", label: "Lotes já vencidos", classe: "red" },
     { chave: "urgencia_30d", label: "Urgência ≤ 30 dias", classe: "orange" },
     { chave: "lotes_perda_provavel", label: "Perda provável", classe: "red" },
     { chave: "lotes_risco_parcial", label: "Risco parcial", classe: "orange" },
     { chave: "lotes_sem_giro", label: "Sem giro (12 meses)", classe: "violet" },
+    { chave: "lotes_vende_a_tempo", label: "Vende a tempo", classe: "aqua" },
   ];
   const el = document.getElementById("kpis");
   el.innerHTML = defs.map(d => `
@@ -424,7 +420,6 @@ function redesenharGraficos() {
 }
 
 function classeLinha(situacao) {
-  if (situacao === "Vencido") return "vencido";
   if (situacao === "≤ 30 dias") return "urgente";
   return "";
 }

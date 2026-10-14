@@ -64,8 +64,8 @@ GitHub Actions, puxando os dados direto da API do Omie.
 ## O que este dashboard mostra (e o que não mostra)
 
 Mostra, agregado e atualizado automaticamente:
-- 6 indicadores (lotes a vencer em 90 dias, vencidos, urgência ≤30 dias,
-  perda provável, risco parcial, sem giro em 12 meses);
+- 6 indicadores (lotes a vencer em 90 dias, urgência ≤30 dias, perda
+  provável, risco parcial, sem giro em 12 meses, vende a tempo);
 - gráficos de lotes por família, por prazo e por risco de perda;
 - uma tabela com todos os lotes (produto, família, lote, validade, dias para
   vencer, saldo, venda média por dia, dias para vender, saldo em risco e
@@ -76,7 +76,10 @@ pedidos faturados e não cancelados dos últimos 12 meses. Supondo que o lote qu
 vence antes sai antes, o script projeta quanto do saldo de cada lote ainda
 sobra na data de validade ("saldo em risco"). Classificação: *Perda provável*
 (sobra ≥ 50% do saldo), *Risco parcial* (sobra algo), *Vende a tempo*, *Sem
-giro* (nenhuma venda em 12 meses) e *Vencido*. É uma projeção pela média: não
+giro* (nenhuma venda em 12 meses).
+
+**Lotes já vencidos não aparecem no painel**: ficam só no e-mail interno
+de vencidos, tratado pela operação. É uma projeção pela média: não
 prevê sazonalidade nem pedidos pontuais.
 
 **Nunca mostra** nome, telefone, e-mail ou razão social de nenhum cliente —
