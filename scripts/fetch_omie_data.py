@@ -16,15 +16,9 @@ IMPORTANTE — status de cada parte desta integração:
     replicada da rotina já em produção (tarefa agendada de e-mail do Grupo
     Pigatto), mesmos parâmetros e mesma regra de negócio (janela de 90 dias,
     saldo > 0, buckets de urgência).
-  - Vendas dos últimos 12 meses (ListarPedidos): construído a partir da
-    documentação pública da API do Omie, mas AINDA NÃO testado contra a conta
-    real do Grupo Pigatto (esta sessão não tem a chave do Omie para testar).
-    Rode manualmente uma vez (aba Actions > Atualizar Dashboard de Lotes a
-    Vencer > Run workflow) e confira o resultado em docs/data.json e os logs
-    da execução antes de confiar cegamente nos números de venda. Se os nomes
-    de campo da resposta de ListarPedidos na sua conta forem diferentes do que
-    está aqui, ajuste a função `buscar_vendas_12_meses` — os pontos de atenção
-    estão comentados no código.
+  - Vendas dos últimos 12 meses (ListarPedidos, endpoint produtos/pedido):
+    só pedidos faturados e não cancelados. Endpoint e campos conferidos contra
+    a conta real em 14/10/2026.
 """
 
 import json
@@ -32,6 +26,7 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -102,7 +97,7 @@ def parse_data_omie(data_str: str):
 
 def buscar_lotes():
     """Retorna a lista de lotes com saldo > 0 dentro da janela de 90 dias + vencidos."""
-    hoje = datetime.now(timezone.utc).date()
+    hoje = datetime.now(ZoneInfo("America/Sao_Paulo")).date()
     limite_futuro = hoje + timedelta(days=JANELA_DIAS)
 
     lotes_relevantes = []
@@ -189,12 +184,10 @@ def buscar_vendas_12_meses(produtos_n_cod: set):
     por produto — SEM guardar nome/telefone/e-mail de nenhum cliente, só o
     código interno do cliente (nCodCliente) para poder contar distintos.
 
-    ATENÇÃO: os nomes de parâmetro/campo abaixo seguem a documentação pública
-    da API do Omie (módulo pedido/pedido, chamada ListarPedidos) mas NÃO foram
-    testados contra a conta real do Grupo Pigatto nesta sessão (sem acesso à
-    chave). Confira o primeiro resultado real e ajuste se necessário.
+    Endpoint produtos/pedido, chamada ListarPedidos (validado contra a conta
+    real em 14/10/2026). Considera apenas pedidos faturados e não cancelados.
     """
-    hoje = datetime.now(timezone.utc).date()
+    hoje = datetime.now(ZoneInfo("America/Sao_Paulo")).date()
     desde = hoje - timedelta(days=JANELA_VENDAS_DIAS)
 
     qtd_por_produto: dict = {}
@@ -203,14 +196,14 @@ def buscar_vendas_12_meses(produtos_n_cod: set):
     pagina = 1
     while True:
         data = omie_call(
-            "pedido/pedido",
+            "produtos/pedido",
             "ListarPedidos",
             {
                 "pagina": pagina,
-                "registros_por_pagina": 50,
+                "registros_por_pagina": 100,
                 "apenas_importado_api": "N",
-                "dDataEmiInicial": desde.strftime("%d/%m/%Y"),
-                "dDataEmiFinal": hoje.strftime("%d/%m/%Y"),
+                "filtrar_por_data_de": desde.strftime("%d/%m/%Y"),
+                "filtrar_por_data_ate": hoje.strftime("%d/%m/%Y"),
             },
         )
         pedidos = data.get("pedido_venda_produto", []) or []
@@ -218,6 +211,10 @@ def buscar_vendas_12_meses(produtos_n_cod: set):
             break
 
         for pedido in pedidos:
+            # Só conta venda efetiva: pedido faturado e não cancelado.
+            info = pedido.get("infoCadastro", {}) or {}
+            if info.get("cancelado") == "S" or info.get("faturado") != "S":
+                continue
             cabecalho = pedido.get("cabecalho", {}) or {}
             cod_cliente = cabecalho.get("codigo_cliente")
             for item in pedido.get("det", []) or []:
@@ -319,7 +316,7 @@ def montar_dashboard():
     )
 
     return {
-        "gerado_em": datetime.now(timezone.utc).isoformat(timespec="seconds") + "Z",
+        "gerado_em": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "janela_dias": JANELA_DIAS,
         "kpis": kpis,
         "por_familia": por_familia,
