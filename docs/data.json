@@ -1,13 +1,13 @@
 {
-  "gerado_em": "2026-10-14T17:39:55+00:00Z",
+  "gerado_em": "2026-10-14T17:46:48+00:00",
   "janela_dias": 90,
   "kpis": {
     "lotes_a_vencer_90d": 33,
     "lotes_vencidos": 15,
     "urgencia_30d": 13,
     "saldo_total_em_risco": 2312.75,
-    "qtd_vendida_12m": 0,
-    "clientes_candidatos_12m": 0
+    "qtd_vendida_12m": 8518.74,
+    "clientes_candidatos_12m": 170
   },
   "por_familia": [
     {
@@ -53,7 +53,48 @@
       "qtd_lotes": 7
     }
   ],
-  "top_produtos": [],
+  "top_produtos": [
+    {
+      "produto": "LORD ADESIVO LA 550 - KG",
+      "qtd_vendida_12m": 2777.1
+    },
+    {
+      "produto": "LORD 852/25 GB - BNG 490 ML/485 GR - C/ BICO MISTURADOR MFQX 10-24 T",
+      "qtd_vendida_12m": 1683.0
+    },
+    {
+      "produto": "LORD 406/19 BNG - 0,460 KG/375 ML - conteúdo",
+      "qtd_vendida_12m": 892.0
+    },
+    {
+      "produto": "MARBOCOTE CR8 - 01 LT - DESMOLDANTE SEMI PERMANENTE",
+      "qtd_vendida_12m": 635.0
+    },
+    {
+      "produto": "LORD 410/19 BNG - 0,460 KG/375 ML - conteúdo",
+      "qtd_vendida_12m": 612.0
+    },
+    {
+      "produto": "LORD FUSOR 2001/2002 HV  BNG 0,890 KG",
+      "qtd_vendida_12m": 416.0
+    },
+    {
+      "produto": "MARBOCOTE 70 -  20 LT - DESMOLDANTE PARA ROTOMOLDAGEM",
+      "qtd_vendida_12m": 387.0
+    },
+    {
+      "produto": "LORD 810/20 - 45 ML C/ BICO MISTURADOR",
+      "qtd_vendida_12m": 213.0
+    },
+    {
+      "produto": "LORD LA 550/19 - BNG - 0,460 KG/ 375 ML - conteúdo",
+      "qtd_vendida_12m": 159.0
+    },
+    {
+      "produto": "LORD ADESIVO 852/25 BNG 45 ML C/BICO",
+      "qtd_vendida_12m": 111.0
+    }
+  ],
   "lotes": [
     {
       "produto": "LORD PRIMER CHEMLOK 459- X ADESIVO GL 2,7 KG - 3,6 L",
