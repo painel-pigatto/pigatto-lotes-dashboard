@@ -1,43 +1,539 @@
 {
-  "gerado_em": "2026-10-09T00:00:00Z",
-  "exemplo": true,
+  "gerado_em": "2026-10-14T17:39:55+00:00Z",
   "janela_dias": 90,
   "kpis": {
-    "lotes_a_vencer_90d": 36,
-    "lotes_vencidos": 14,
-    "urgencia_30d": 16,
-    "saldo_total_em_risco": 2496.95,
-    "qtd_vendida_12m": 19593.72,
-    "clientes_candidatos_12m": 102
+    "lotes_a_vencer_90d": 33,
+    "lotes_vencidos": 15,
+    "urgencia_30d": 13,
+    "saldo_total_em_risco": 2312.75,
+    "qtd_vendida_12m": 0,
+    "clientes_candidatos_12m": 0
   },
   "por_familia": [
-    { "familia": "Adesivos Estruturais", "qtd_lotes": 25 },
-    { "familia": "Chemlok", "qtd_lotes": 8 },
-    { "familia": "Marbocote", "qtd_lotes": 15 },
-    { "familia": "Bio-Chem", "qtd_lotes": 1 },
-    { "familia": "Silquim", "qtd_lotes": 1 },
-    { "familia": "Outras", "qtd_lotes": 0 }
+    {
+      "familia": "Adesivos Estruturais",
+      "qtd_lotes": 23
+    },
+    {
+      "familia": "Chemlok",
+      "qtd_lotes": 8
+    },
+    {
+      "familia": "Marbocote",
+      "qtd_lotes": 15
+    },
+    {
+      "familia": "Bio-Chem",
+      "qtd_lotes": 1
+    },
+    {
+      "familia": "Silquim",
+      "qtd_lotes": 1
+    },
+    {
+      "familia": "Outras",
+      "qtd_lotes": 0
+    }
   ],
   "por_urgencia": [
-    { "situacao": "Vencido", "qtd_lotes": 14 },
-    { "situacao": "≤ 30 dias", "qtd_lotes": 16 },
-    { "situacao": "31–60 dias", "qtd_lotes": 13 },
-    { "situacao": "61–90 dias", "qtd_lotes": 7 }
+    {
+      "situacao": "Vencido",
+      "qtd_lotes": 15
+    },
+    {
+      "situacao": "≤ 30 dias",
+      "qtd_lotes": 13
+    },
+    {
+      "situacao": "31–60 dias",
+      "qtd_lotes": 13
+    },
+    {
+      "situacao": "61–90 dias",
+      "qtd_lotes": 7
+    }
   ],
-  "top_produtos": [
-    { "produto": "LORD ADESIVO LA 550 - KG", "qtd_vendida_12m": 2757.1 },
-    { "produto": "LORD 852/25 GB - BNG 490 ML/485 GR - C/ BICO MISTURADOR MFQX 10-24 T", "qtd_vendida_12m": 1683 },
-    { "produto": "LORD 406/19 BNG - 0,460 KG/375 ML - conteúdo", "qtd_vendida_12m": 889 },
-    { "produto": "LORD 410/19 BNG - 0,460 KG/375 ML - conteúdo", "qtd_vendida_12m": 612 },
-    { "produto": "MARBOCOTE CR8 - 01 LT - DESMOLDANTE SEMI PERMANENTE", "qtd_vendida_12m": 593 },
-    { "produto": "LORD FUSOR 2001/2002 HV BNG 0,890 KG", "qtd_vendida_12m": 416 },
-    { "produto": "MARBOCOTE 70 - 20 LT - DESMOLDANTE PARA ROTOMOLDAGEM", "qtd_vendida_12m": 407 },
-    { "produto": "LORD 810/20 - 45 ML C/ BICO MISTURADOR", "qtd_vendida_12m": 213 },
-    { "produto": "LORD LA 550/19 - BNG - 0,460 KG/ 375 ML - conteúdo", "qtd_vendida_12m": 159 },
-    { "produto": "LORD ADESIVO 852/25 BNG 45 ML C/BICO", "qtd_vendida_12m": 111 }
-  ],
+  "top_produtos": [],
   "lotes": [
-    { "produto": "CHEMLOK 402 ADESIVO GL MT 3,6L", "familia": "Chemlok", "lote": "25100033", "fabricacao": "10/04/2025", "validade": "15/04/2026", "dias_restantes": -177, "situacao": "Vencido", "saldo": 3 },
-    { "produto": "LORD FUSOR 2001/2002 HV BNG 0,890 KG", "familia": "Adesivos Estruturais", "lote": "3023814", "fabricacao": "01/07/2026", "validade": "07/11/2026", "dias_restantes": 29, "situacao": "≤ 30 dias", "saldo": 131 }
+    {
+      "produto": "LORD PRIMER CHEMLOK 459- X ADESIVO GL 2,7 KG - 3,6 L",
+      "familia": "Chemlok",
+      "lote": "25100033",
+      "fabricacao": "20/10/2025",
+      "validade": "18/04/2026",
+      "dias_restantes": -179,
+      "situacao": "Vencido",
+      "saldo": 2.18
+    },
+    {
+      "produto": "DILUENTE SB-613 (ALCOOL) LT 5L",
+      "familia": "Chemlok",
+      "lote": "25050117",
+      "fabricacao": "10/05/2025",
+      "validade": "10/05/2026",
+      "dias_restantes": -157,
+      "situacao": "Vencido",
+      "saldo": 3.96
+    },
+    {
+      "produto": "CHEMLOK 6224T ADESIVO GL MT 3,6L",
+      "familia": "Chemlok",
+      "lote": "26010075",
+      "fabricacao": "08/01/2026",
+      "validade": "07/06/2026",
+      "dias_restantes": -129,
+      "situacao": "Vencido",
+      "saldo": 5.76
+    },
+    {
+      "produto": "MARBOCOTE 192 AERO - FR 400ML",
+      "familia": "Marbocote",
+      "lote": "1922507141",
+      "fabricacao": "15/07/2025",
+      "validade": "15/07/2026",
+      "dias_restantes": -91,
+      "situacao": "Vencido",
+      "saldo": 2
+    },
+    {
+      "produto": "MARBOCOTE 70 -  20 LT - DESMOLDANTE PARA ROTOMOLDAGEM",
+      "familia": "Marbocote",
+      "lote": "702508071",
+      "fabricacao": "07/08/2025",
+      "validade": "07/08/2026",
+      "dias_restantes": -68,
+      "situacao": "Vencido",
+      "saldo": 60
+    },
+    {
+      "produto": "MARBOCOTE 192 AERO - FR 400ML",
+      "familia": "Marbocote",
+      "lote": "1922508111",
+      "fabricacao": "11/08/2025",
+      "validade": "11/08/2026",
+      "dias_restantes": -64,
+      "situacao": "Vencido",
+      "saldo": 15
+    },
+    {
+      "produto": "MARBOCOTE 70 -  20 LT - DESMOLDANTE PARA ROTOMOLDAGEM",
+      "familia": "Marbocote",
+      "lote": "702508131",
+      "fabricacao": "13/08/2025",
+      "validade": "13/08/2026",
+      "dias_restantes": -62,
+      "situacao": "Vencido",
+      "saldo": 40
+    },
+    {
+      "produto": "LORD PRIMER CHEMLOK 459- X ADESIVO GL 2,7 KG - 3,6 L",
+      "familia": "Chemlok",
+      "lote": "26020098",
+      "fabricacao": "19/02/2026",
+      "validade": "18/08/2026",
+      "dias_restantes": -57,
+      "situacao": "Vencido",
+      "saldo": 5.2
+    },
+    {
+      "produto": "MARBOCOTE CR 2000 - BB 20L",
+      "familia": "Marbocote",
+      "lote": "20002508271",
+      "fabricacao": "27/08/2025",
+      "validade": "27/08/2026",
+      "dias_restantes": -48,
+      "situacao": "Vencido",
+      "saldo": 2
+    },
+    {
+      "produto": "LORD LA 810 ADESIVO BD MT 20L",
+      "familia": "Adesivos Estruturais",
+      "lote": "25120092",
+      "fabricacao": "01/12/2025",
+      "validade": "28/08/2026",
+      "dias_restantes": -47,
+      "situacao": "Vencido",
+      "saldo": 16.88
+    },
+    {
+      "produto": "DILUENTE SB-610 (MIBK) LT 5L",
+      "familia": "Chemlok",
+      "lote": "25090039",
+      "fabricacao": "03/09/2025",
+      "validade": "03/09/2026",
+      "dias_restantes": -41,
+      "situacao": "Vencido",
+      "saldo": 3.16
+    },
+    {
+      "produto": "DILUENTE SB-612 (XILOL) LT 5L",
+      "familia": "Chemlok",
+      "lote": "25090041",
+      "fabricacao": "08/09/2025",
+      "validade": "08/09/2026",
+      "dias_restantes": -36,
+      "situacao": "Vencido",
+      "saldo": 3.36
+    },
+    {
+      "produto": "MARBOCOTE 95 - BB 200 KG - DESMOLDANTE INTERNO PULTRUSÃO",
+      "familia": "Marbocote",
+      "lote": "952509241",
+      "fabricacao": "24/09/2025",
+      "validade": "24/09/2026",
+      "dias_restantes": -20,
+      "situacao": "Vencido",
+      "saldo": 97
+    },
+    {
+      "produto": "SILQUIM ATIVADOR DE CIANO 190ML",
+      "familia": "Silquim",
+      "lote": "LOTE_INICIAL_000",
+      "fabricacao": "30/09/2026",
+      "validade": "30/09/2026",
+      "dias_restantes": -14,
+      "situacao": "Vencido",
+      "saldo": 4
+    },
+    {
+      "produto": "LORD 406/19 BNG - 0,460 KG/375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5256",
+      "fabricacao": "16/01/2026",
+      "validade": "13/10/2026",
+      "dias_restantes": -1,
+      "situacao": "Vencido",
+      "saldo": 14
+    },
+    {
+      "produto": "LORD 406/19 BNG - 0,460 KG/375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5277",
+      "fabricacao": "21/01/2026",
+      "validade": "18/10/2026",
+      "dias_restantes": 4,
+      "situacao": "≤ 30 dias",
+      "saldo": 4
+    },
+    {
+      "produto": "LORD 406/19 BNG - 0,460 KG/375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5343",
+      "fabricacao": "21/01/2026",
+      "validade": "18/10/2026",
+      "dias_restantes": 4,
+      "situacao": "≤ 30 dias",
+      "saldo": 11
+    },
+    {
+      "produto": "LORD 406/19 BNG - 0,460 KG/375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5344",
+      "fabricacao": "21/01/2026",
+      "validade": "18/10/2026",
+      "dias_restantes": 4,
+      "situacao": "≤ 30 dias",
+      "saldo": 50
+    },
+    {
+      "produto": "LORD 406/19 BNG - 0,460 KG/375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5383",
+      "fabricacao": "21/01/2026",
+      "validade": "18/10/2026",
+      "dias_restantes": 4,
+      "situacao": "≤ 30 dias",
+      "saldo": 51
+    },
+    {
+      "produto": "LORD 403/19 - 45 ML C/ 02 BICOS PMA 6 X 21",
+      "familia": "Adesivos Estruturais",
+      "lote": "001",
+      "fabricacao": "22/01/2026",
+      "validade": "19/10/2026",
+      "dias_restantes": 5,
+      "situacao": "≤ 30 dias",
+      "saldo": 83
+    },
+    {
+      "produto": "CHEMLOK 402 ADESIVO GL MT 3,6L",
+      "familia": "Chemlok",
+      "lote": "26040210",
+      "fabricacao": "27/04/2026",
+      "validade": "24/10/2026",
+      "dias_restantes": 10,
+      "situacao": "≤ 30 dias",
+      "saldo": 8.8
+    },
+    {
+      "produto": "MARBOCOTE 227CEE - 1 LT",
+      "familia": "Marbocote",
+      "lote": "2272510281",
+      "fabricacao": "27/10/2025",
+      "validade": "27/10/2026",
+      "dias_restantes": 13,
+      "situacao": "≤ 30 dias",
+      "saldo": 50
+    },
+    {
+      "produto": "COOLTHERM EP-2000 R GL",
+      "familia": "Adesivos Estruturais",
+      "lote": "260283",
+      "fabricacao": "28/01/2026",
+      "validade": "28/10/2026",
+      "dias_restantes": 14,
+      "situacao": "≤ 30 dias",
+      "saldo": 8.3529
+    },
+    {
+      "produto": "COOLTHERM EP-2000 H GL",
+      "familia": "Adesivos Estruturais",
+      "lote": "260284",
+      "fabricacao": "29/01/2026",
+      "validade": "29/10/2026",
+      "dias_restantes": 15,
+      "situacao": "≤ 30 dias",
+      "saldo": 9
+    },
+    {
+      "produto": "MARBOCOTE SEALER 54 - 01 LT - SELADOR",
+      "familia": "Marbocote",
+      "lote": "542507311",
+      "fabricacao": "31/10/2025",
+      "validade": "31/10/2026",
+      "dias_restantes": 17,
+      "situacao": "≤ 30 dias",
+      "saldo": 85
+    },
+    {
+      "produto": "BIO-CHEM CLEANTEC HC 40 - 60,0 KG",
+      "familia": "Bio-Chem",
+      "lote": "1123060A1701",
+      "fabricacao": "01/11/2023",
+      "validade": "01/11/2026",
+      "dias_restantes": 18,
+      "situacao": "≤ 30 dias",
+      "saldo": 1
+    },
+    {
+      "produto": "MARBOCOTE 227CEE - 1 LT",
+      "familia": "Marbocote",
+      "lote": "2272511032",
+      "fabricacao": "03/11/2025",
+      "validade": "03/11/2026",
+      "dias_restantes": 20,
+      "situacao": "≤ 30 dias",
+      "saldo": 54
+    },
+    {
+      "produto": "LORD FUSOR 2001/2002 HV  BNG 0,890 KG",
+      "familia": "Adesivos Estruturais",
+      "lote": "26020040",
+      "fabricacao": "10/02/2026",
+      "validade": "07/11/2026",
+      "dias_restantes": 24,
+      "situacao": "≤ 30 dias",
+      "saldo": 131
+    },
+    {
+      "produto": "MARBOCOTE SEALER - 01 LT - SELADOR",
+      "familia": "Marbocote",
+      "lote": "S2511141",
+      "fabricacao": "14/11/2025",
+      "validade": "14/11/2026",
+      "dias_restantes": 31,
+      "situacao": "31–60 dias",
+      "saldo": 4
+    },
+    {
+      "produto": "LORD 810/20 - 45 ML C/ BICO MISTURADOR",
+      "familia": "Adesivos Estruturais",
+      "lote": "PIG 0001",
+      "fabricacao": "19/02/2026",
+      "validade": "16/11/2026",
+      "dias_restantes": 33,
+      "situacao": "31–60 dias",
+      "saldo": 221
+    },
+    {
+      "produto": "LORD ADESIVO 852/25 BNG 45 ML C/BICO",
+      "familia": "Adesivos Estruturais",
+      "lote": "5625",
+      "fabricacao": "23/02/2026",
+      "validade": "20/11/2026",
+      "dias_restantes": 37,
+      "situacao": "31–60 dias",
+      "saldo": 16
+    },
+    {
+      "produto": "LORD 852/25 GB - BNG 490 ML/485 GR - C/ BICO MISTURADOR MFQX 10-24 T",
+      "familia": "Adesivos Estruturais",
+      "lote": "5632",
+      "fabricacao": "23/02/2026",
+      "validade": "20/11/2026",
+      "dias_restantes": 37,
+      "situacao": "31–60 dias",
+      "saldo": 42
+    },
+    {
+      "produto": "LORD 852/25 GB - BNG 490 ML/485 GR - C/ BICO MISTURADOR MFQX 10-24 T",
+      "familia": "Adesivos Estruturais",
+      "lote": "5633",
+      "fabricacao": "23/02/2026",
+      "validade": "20/11/2026",
+      "dias_restantes": 37,
+      "situacao": "31–60 dias",
+      "saldo": 42
+    },
+    {
+      "produto": "MARBOCOTE T W1106 - 20L",
+      "familia": "Marbocote",
+      "lote": "11062511271",
+      "fabricacao": "27/11/2025",
+      "validade": "27/11/2026",
+      "dias_restantes": 44,
+      "situacao": "31–60 dias",
+      "saldo": 20
+    },
+    {
+      "produto": "MARBOCOTE MC-P2 - LT 1L",
+      "familia": "Marbocote",
+      "lote": "22512011",
+      "fabricacao": "01/12/2025",
+      "validade": "01/12/2026",
+      "dias_restantes": 48,
+      "situacao": "31–60 dias",
+      "saldo": 9
+    },
+    {
+      "produto": "LORD ADESIVO LA 550 - KG",
+      "familia": "Adesivos Estruturais",
+      "lote": "26030067",
+      "fabricacao": "13/03/2026",
+      "validade": "08/12/2026",
+      "dias_restantes": 55,
+      "situacao": "31–60 dias",
+      "saldo": 177.1
+    },
+    {
+      "produto": "LORD LA 550/19 - BNG - 0,460 KG/ 375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5392",
+      "fabricacao": "13/03/2026",
+      "validade": "08/12/2026",
+      "dias_restantes": 55,
+      "situacao": "31–60 dias",
+      "saldo": 54
+    },
+    {
+      "produto": "LORD LA 550/19 - BNG - 0,460 KG/ 375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5616",
+      "fabricacao": "13/03/2026",
+      "validade": "08/12/2026",
+      "dias_restantes": 55,
+      "situacao": "31–60 dias",
+      "saldo": 54
+    },
+    {
+      "produto": "LORD LA 550/19 - BNG - 0,460 KG/ 375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5617",
+      "fabricacao": "13/03/2026",
+      "validade": "08/12/2026",
+      "dias_restantes": 55,
+      "situacao": "31–60 dias",
+      "saldo": 54
+    },
+    {
+      "produto": "MARBOCOTE SEALER - 01 LT - SELADOR",
+      "familia": "Marbocote",
+      "lote": "S2512081",
+      "fabricacao": "08/12/2025",
+      "validade": "08/12/2026",
+      "dias_restantes": 55,
+      "situacao": "31–60 dias",
+      "saldo": 36
+    },
+    {
+      "produto": "MARBOCOTE CR8 - 01 LT - DESMOLDANTE SEMI PERMANENTE",
+      "familia": "Marbocote",
+      "lote": "82512081",
+      "fabricacao": "08/12/2025",
+      "validade": "08/12/2026",
+      "dias_restantes": 55,
+      "situacao": "31–60 dias",
+      "saldo": 1
+    },
+    {
+      "produto": "MARBOCOTE SEALER - 01 LT - SELADOR",
+      "familia": "Marbocote",
+      "lote": "S2509181",
+      "fabricacao": "19/12/2025",
+      "validade": "19/12/2026",
+      "dias_restantes": 66,
+      "situacao": "61–90 dias",
+      "saldo": 15
+    },
+    {
+      "produto": "LORD 410/19 BNG - 0,460 KG/375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5361",
+      "fabricacao": "25/03/2026",
+      "validade": "20/12/2026",
+      "dias_restantes": 67,
+      "situacao": "61–90 dias",
+      "saldo": 39
+    },
+    {
+      "produto": "LORD 410/19 BNG - 0,460 KG/375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5362",
+      "fabricacao": "25/03/2026",
+      "validade": "20/12/2026",
+      "dias_restantes": 67,
+      "situacao": "61–90 dias",
+      "saldo": 48
+    },
+    {
+      "produto": "LORD 410/19 BNG - 0,460 KG/375 ML - conteúdo",
+      "familia": "Adesivos Estruturais",
+      "lote": "5363",
+      "fabricacao": "25/03/2026",
+      "validade": "20/12/2026",
+      "dias_restantes": 67,
+      "situacao": "61–90 dias",
+      "saldo": 33
+    },
+    {
+      "produto": "LORD ADESIVO 410 - KG",
+      "familia": "Adesivos Estruturais",
+      "lote": "26030094",
+      "fabricacao": "25/03/2026",
+      "validade": "20/12/2026",
+      "dias_restantes": 67,
+      "situacao": "61–90 dias",
+      "saldo": 60
+    },
+    {
+      "produto": "LORD PRIMER CHEMLOK 459- X ADESIVO GL 2,7 KG - 3,6 L",
+      "familia": "Chemlok",
+      "lote": "26060092",
+      "fabricacao": "29/06/2026",
+      "validade": "26/12/2026",
+      "dias_restantes": 73,
+      "situacao": "61–90 dias",
+      "saldo": 7
+    },
+    {
+      "produto": "LORD ADESIVO LA 550 - KG",
+      "familia": "Adesivos Estruturais",
+      "lote": "26040071",
+      "fabricacao": "08/04/2026",
+      "validade": "03/01/2027",
+      "dias_restantes": 81,
+      "situacao": "61–90 dias",
+      "saldo": 560
+    }
   ]
 }
