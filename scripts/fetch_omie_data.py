@@ -48,6 +48,8 @@ FAMILIAS_CONHECIDAS = [
     "Silquim",
 ]
 
+ORDEM_RISCO = ["Vencido", "Perda provável", "Risco parcial", "Sem giro", "Vende a tempo"]
+
 
 def omie_call(path: str, call: str, param: dict) -> dict:
     """Chamada genérica à API do Omie, com retry simples em erro de rede/5xx."""
@@ -160,29 +162,76 @@ def bucket_urgencia(dias_restantes: int) -> str:
     return "61–90 dias"
 
 
-_cache_familia: dict = {}
+_cache_produto: dict = {}
 
 
-def buscar_familia(n_cod_produto) -> str:
-    """Consulta a família de um produto no Omie (com cache em memória por execução)."""
-    if n_cod_produto in _cache_familia:
-        return _cache_familia[n_cod_produto]
+def buscar_produto(n_cod_produto):
+    """Consulta família e unidade de um produto no Omie (com cache em memória por execução)."""
+    if n_cod_produto in _cache_produto:
+        return _cache_produto[n_cod_produto]
     try:
         data = omie_call("geral/produtos", "ConsultarProduto", {"codigo_produto": n_cod_produto})
         familia = data.get("descricao_familia") or "Outras"
+        unidade = (data.get("unidade") or "").strip()
     except Exception:  # noqa: BLE001 - não deixar uma falha pontual derrubar a execução inteira
-        familia = "Outras"
+        familia, unidade = "Outras", ""
     if familia not in FAMILIAS_CONHECIDAS:
         familia = "Outras"
-    _cache_familia[n_cod_produto] = familia
-    return familia
+    _cache_produto[n_cod_produto] = (familia, unidade)
+    return familia, unidade
+
+
+def classificar_risco(saldo: float, saldo_em_risco: float, vencido: bool, sem_giro: bool) -> str:
+    if vencido:
+        return "Vencido"
+    if sem_giro:
+        return "Sem giro"
+    if saldo_em_risco <= 0:
+        return "Vende a tempo"
+    if saldo_em_risco >= 0.5 * saldo:
+        return "Perda provável"
+    return "Risco parcial"
+
+
+def calcular_cobertura(lotes: list, qtd_por_produto: dict) -> None:
+    """
+    Projeta, pelo ritmo médio de venda dos últimos 12 meses, quanto do saldo de
+    cada lote deve vencer sem ser vendido. Supõe que os lotes de um mesmo
+    produto saem na ordem de validade (o que vence antes sai antes) e que a
+    capacidade de venda não usada até um lote vencer passa para o próximo.
+    Lotes já vencidos ficam inteiros em risco e não consomem capacidade.
+    """
+    por_produto: dict = {}
+    for lote in lotes:
+        por_produto.setdefault(lote["n_cod_produto"], []).append(lote)
+
+    for n_cod, lotes_prod in por_produto.items():
+        venda_dia = qtd_por_produto.get(n_cod, 0) / JANELA_VENDAS_DIAS
+        vendido_antes = 0.0
+        for lote in sorted(lotes_prod, key=lambda l: l["dias_restantes"]):
+            saldo = float(lote["saldo"])
+            lote["venda_media_dia"] = round(venda_dia, 3)
+            if lote["vencido"]:
+                lote["dias_para_vender"] = None
+                lote["saldo_em_risco"] = round(saldo, 2)
+            elif venda_dia <= 0:
+                lote["dias_para_vender"] = None
+                lote["saldo_em_risco"] = round(saldo, 2)
+            else:
+                capacidade = venda_dia * lote["dias_restantes"] - vendido_antes
+                vendido = min(saldo, max(0.0, capacidade))
+                lote["dias_para_vender"] = round((vendido_antes + saldo) / venda_dia)
+                lote["saldo_em_risco"] = round(saldo - vendido, 2)
+                vendido_antes += vendido
+            lote["risco"] = classificar_risco(
+                saldo, lote["saldo_em_risco"], lote["vencido"], venda_dia <= 0
+            )
 
 
 def buscar_vendas_12_meses(produtos_n_cod: set):
     """
-    Soma a quantidade vendida nos últimos 12 meses e conta clientes distintos,
-    por produto — SEM guardar nome/telefone/e-mail de nenhum cliente, só o
-    código interno do cliente (nCodCliente) para poder contar distintos.
+    Soma a quantidade vendida nos últimos 12 meses por produto. Nenhum dado de
+    cliente é lido para o painel.
 
     Endpoint produtos/pedido, chamada ListarPedidos (validado contra a conta
     real em 14/10/2026). Considera apenas pedidos faturados e não cancelados.
@@ -191,7 +240,6 @@ def buscar_vendas_12_meses(produtos_n_cod: set):
     desde = hoje - timedelta(days=JANELA_VENDAS_DIAS)
 
     qtd_por_produto: dict = {}
-    clientes_por_produto: dict = {}
 
     pagina = 1
     while True:
@@ -215,8 +263,6 @@ def buscar_vendas_12_meses(produtos_n_cod: set):
             info = pedido.get("infoCadastro", {}) or {}
             if info.get("cancelado") == "S" or info.get("faturado") != "S":
                 continue
-            cabecalho = pedido.get("cabecalho", {}) or {}
-            cod_cliente = cabecalho.get("codigo_cliente")
             for item in pedido.get("det", []) or []:
                 prod = item.get("produto", {}) or {}
                 n_cod = prod.get("codigo_produto")
@@ -224,53 +270,46 @@ def buscar_vendas_12_meses(produtos_n_cod: set):
                     continue
                 qtd = float(prod.get("quantidade", 0) or 0)
                 qtd_por_produto[n_cod] = qtd_por_produto.get(n_cod, 0) + qtd
-                clientes_por_produto.setdefault(n_cod, set())
-                if cod_cliente is not None:
-                    clientes_por_produto[n_cod].add(cod_cliente)
 
         total_paginas = data.get("total_de_paginas", pagina)
         if pagina >= total_paginas:
             break
         pagina += 1
 
-    return qtd_por_produto, {k: len(v) for k, v in clientes_por_produto.items()}
+    return qtd_por_produto
 
 
 def montar_dashboard():
     lotes = buscar_lotes()
 
     for lote in lotes:
-        lote["familia"] = buscar_familia(lote["n_cod_produto"])
+        lote["familia"], lote["unidade"] = buscar_produto(lote["n_cod_produto"])
         lote["urgencia"] = bucket_urgencia(lote["dias_restantes"])
 
     produtos_n_cod = {l["n_cod_produto"] for l in lotes if l["n_cod_produto"] is not None}
 
     try:
-        qtd_por_produto, clientes_por_produto = buscar_vendas_12_meses(produtos_n_cod)
+        qtd_por_produto = buscar_vendas_12_meses(produtos_n_cod)
     except Exception as exc:  # noqa: BLE001
-        print(f"AVISO: falha ao buscar vendas dos últimos 12 meses ({exc}). "
-              f"O dashboard será publicado sem os números de venda desta execução.",
+        print(f"ERRO: falha ao buscar vendas dos últimos 12 meses ({exc}). "
+              f"Sem vendas a projeção de risco ficaria errada; data.json não foi atualizado.",
               file=sys.stderr)
-        qtd_por_produto, clientes_por_produto = {}, {}
+        raise SystemExit(1)  # sem vendas a projeção de risco ficaria errada; melhor falhar visível
 
-    # KPIs
+    calcular_cobertura(lotes, qtd_por_produto)
+
+    # KPIs — só contagens de lotes: somar saldos misturaria kg, litros e bisnagas.
     lotes_a_vencer_90d = [l for l in lotes if not l["vencido"]]
-    lotes_vencidos = [l for l in lotes if l["vencido"]]
-    urgencia_30d = [l for l in lotes_a_vencer_90d if l["dias_restantes"] <= 30]
-
-    # "clientes_candidatos_12m" é a SOMA da contagem de clientes distintos por
-    # produto (não um total global deduplicado) — um mesmo cliente que compra
-    # dois produtos diferentes a vencer conta uma vez em cada produto. Isso é
-    # de propósito: não guardamos nenhum ID de cliente no JSON público, só a
-    # contagem por produto, então não dá (nem deve) reconstruir a deduplicação
-    # global aqui.
+    contagem_risco = {r: 0 for r in ORDEM_RISCO}
+    for lote in lotes:
+        contagem_risco[lote["risco"]] += 1
     kpis = {
         "lotes_a_vencer_90d": len(lotes_a_vencer_90d),
-        "lotes_vencidos": len(lotes_vencidos),
-        "urgencia_30d": len(urgencia_30d),
-        "saldo_total_em_risco": round(sum(l["saldo"] for l in lotes), 2),
-        "qtd_vendida_12m": round(sum(qtd_por_produto.values()), 2),
-        "clientes_candidatos_12m": sum(clientes_por_produto.values()),
+        "lotes_vencidos": contagem_risco["Vencido"],
+        "urgencia_30d": len([l for l in lotes_a_vencer_90d if l["dias_restantes"] <= 30]),
+        "lotes_perda_provavel": contagem_risco["Perda provável"],
+        "lotes_risco_parcial": contagem_risco["Risco parcial"],
+        "lotes_sem_giro": contagem_risco["Sem giro"],
     }
 
     # Por família
@@ -286,16 +325,7 @@ def montar_dashboard():
         contagem_urgencia[lote["urgencia"]] += 1
     por_urgencia = [{"situacao": u, "qtd_lotes": contagem_urgencia[u]} for u in ordem_urgencia]
 
-    # Top produtos por quantidade vendida (12 meses)
-    produtos_por_codigo = {l["n_cod_produto"]: l["produto"] for l in lotes}
-    top_produtos = sorted(
-        (
-            {"produto": produtos_por_codigo.get(n_cod, str(n_cod)), "qtd_vendida_12m": round(qtd, 2)}
-            for n_cod, qtd in qtd_por_produto.items()
-        ),
-        key=lambda x: x["qtd_vendida_12m"],
-        reverse=True,
-    )[:10]
+    por_risco = [{"risco": r, "qtd_lotes": contagem_risco[r]} for r in ORDEM_RISCO]
 
     # Detalhe de lotes (produto/lote/datas — sem nenhum dado de cliente)
     detalhe_lotes = sorted(
@@ -309,10 +339,15 @@ def montar_dashboard():
                 "dias_restantes": l["dias_restantes"],
                 "situacao": l["urgencia"],
                 "saldo": l["saldo"],
+                "unidade": l["unidade"],
+                "venda_media_dia": l["venda_media_dia"],
+                "dias_para_vender": l["dias_para_vender"],
+                "saldo_em_risco": l["saldo_em_risco"],
+                "risco": l["risco"],
             }
             for l in lotes
         ),
-        key=lambda x: x["dias_restantes"],
+        key=lambda x: (ORDEM_RISCO.index(x["risco"]), x["dias_restantes"]),
     )
 
     return {
@@ -321,7 +356,7 @@ def montar_dashboard():
         "kpis": kpis,
         "por_familia": por_familia,
         "por_urgencia": por_urgencia,
-        "top_produtos": top_produtos,
+        "por_risco": por_risco,
         "lotes": detalhe_lotes,
     }
 

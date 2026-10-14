@@ -156,7 +156,7 @@
 
   .charts {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr));
     gap: 16px;
     margin-bottom: 24px;
   }
@@ -185,6 +185,14 @@
   th { color: var(--text-secondary); font-weight: 700; cursor: pointer; white-space: nowrap; }
   tr.vencido td.situacao { color: var(--red); font-weight: 600; }
   tr.urgente td.situacao { color: var(--orange-text); font-weight: 600; }
+  td.num { text-align: right; white-space: nowrap; }
+  td.produto { min-width: 220px; }
+  .risco { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .risco.vencido, .risco.perda { background: var(--red-bg); color: var(--red); }
+  .risco.parcial { background: var(--orange-bg); color: var(--orange-text); }
+  .risco.semgiro { background: var(--violet-bg); color: var(--violet); }
+  .risco.ok { background: var(--aqua-bg); color: var(--aqua-text); }
+  .nota { color: var(--text-muted); font-size: 12px; margin: 8px 0 0; }
 
   footer { max-width: 1200px; margin: 0 auto; padding: 8px 16px 32px; color: var(--text-muted); font-size: 12px; }
   footer a { color: inherit; }
@@ -194,7 +202,7 @@
   <div class="wrap">
     <header>
       <h1>Painel Comercial — Produtos a Vencer</h1>
-      <p id="subtitulo">Lotes a vencer e vencidos cruzados com vendas dos últimos 12 meses. Dados agregados — sem informação individual de cliente.</p>
+      <p id="subtitulo">Lotes a vencer e vencidos, com a projeção de quanto deve vencer sem ser vendido no ritmo dos últimos 12 meses. Sem informação de cliente.</p>
       <button class="theme-toggle" id="themeToggle" type="button">Alternar tema</button>
     </header>
     <main>
@@ -214,8 +222,8 @@
           <canvas id="chartUrgencia"></canvas>
         </div>
         <div class="card">
-          <h2>Top 10 produtos por quantidade vendida (12 meses)</h2>
-          <canvas id="chartProdutos"></canvas>
+          <h2>Lotes por risco de perda</h2>
+          <canvas id="chartRisco"></canvas>
         </div>
       </section>
 
@@ -224,11 +232,19 @@
           <input type="search" id="filtroProduto" placeholder="Buscar produto ou lote…" />
           <select id="filtroFamilia"><option value="">Todas as famílias</option></select>
           <select id="filtroSituacao">
-            <option value="">Todas as situações</option>
+            <option value="">Todos os prazos</option>
             <option value="Vencido">Vencido</option>
             <option value="≤ 30 dias">≤ 30 dias</option>
             <option value="31–60 dias">31–60 dias</option>
             <option value="61–90 dias">61–90 dias</option>
+          </select>
+          <select id="filtroRisco">
+            <option value="">Todos os riscos</option>
+            <option value="Vencido">Vencido</option>
+            <option value="Perda provável">Perda provável</option>
+            <option value="Risco parcial">Risco parcial</option>
+            <option value="Sem giro">Sem giro</option>
+            <option value="Vende a tempo">Vende a tempo</option>
           </select>
         </div>
         <div style="overflow-x:auto">
@@ -238,16 +254,19 @@
                 <th data-key="produto">Produto</th>
                 <th data-key="familia">Família</th>
                 <th data-key="lote">Lote</th>
-                <th data-key="fabricacao">Fabricação</th>
                 <th data-key="validade">Validade</th>
-                <th data-key="dias_restantes">Dias restantes</th>
-                <th data-key="situacao">Situação</th>
+                <th data-key="dias_restantes">Dias p/ vencer</th>
                 <th data-key="saldo">Saldo</th>
+                <th data-key="venda_media_dia">Venda/dia</th>
+                <th data-key="dias_para_vender">Dias p/ vender</th>
+                <th data-key="saldo_em_risco">Saldo em risco</th>
+                <th data-key="risco">Risco</th>
               </tr>
             </thead>
             <tbody id="tabelaLotesBody"></tbody>
           </table>
         </div>
+        <p class="nota">Projeção pelo ritmo médio de vendas faturadas dos últimos 12 meses, supondo que o lote que vence antes sai antes. "Saldo em risco" é a quantidade que deve sobrar na data de validade, na unidade do produto. Não considera sazonalidade nem pedidos pontuais.</p>
       </section>
     </main>
     <footer>
@@ -264,6 +283,18 @@ const CORES_FAMILIA = {
   "Bio-Chem": "#eda100",
   "Silquim": "#e87ba4",
   "Outras": "#008300",
+};
+const ORDEM_RISCO = ["Vencido", "Perda provável", "Risco parcial", "Sem giro", "Vende a tempo"];
+const CORES_RISCO = {
+  "Vencido": "#d03b3b",
+  "Perda provável": "#ec835a",
+  "Risco parcial": "#fab219",
+  "Sem giro": "#4a3aa7",
+  "Vende a tempo": "#1baf7a",
+};
+const CLASSE_RISCO = {
+  "Vencido": "vencido", "Perda provável": "perda", "Risco parcial": "parcial",
+  "Sem giro": "semgiro", "Vende a tempo": "ok",
 };
 const CORES_URGENCIA = {
   "Vencido": "#d03b3b",
@@ -315,9 +346,9 @@ function montarKpis(kpis) {
     { chave: "lotes_a_vencer_90d", label: "Lotes a vencer (90 dias)", classe: "blue" },
     { chave: "lotes_vencidos", label: "Lotes já vencidos", classe: "red" },
     { chave: "urgencia_30d", label: "Urgência ≤ 30 dias", classe: "orange" },
-    { chave: "saldo_total_em_risco", label: "Saldo total em risco (un)", classe: "blue" },
-    { chave: "qtd_vendida_12m", label: "Qtd. vendida últ. 12 meses", classe: "aqua" },
-    { chave: "clientes_candidatos_12m", label: "Clientes candidatos (12 meses)", classe: "violet" },
+    { chave: "lotes_perda_provavel", label: "Perda provável", classe: "red" },
+    { chave: "lotes_risco_parcial", label: "Risco parcial", classe: "orange" },
+    { chave: "lotes_sem_giro", label: "Sem giro (12 meses)", classe: "violet" },
   ];
   const el = document.getElementById("kpis");
   el.innerHTML = defs.map(d => `
@@ -382,13 +413,13 @@ function redesenharGraficos() {
     false
   );
 
-  const top10 = d.top_produtos.slice(0, 10);
-  graficos.produtos = graficoBarras(
-    document.getElementById("chartProdutos"),
-    top10.map(x => x.produto.length > 28 ? x.produto.slice(0, 26) + "…" : x.produto),
-    top10.map(x => x.qtd_vendida_12m),
-    top10.map(() => "#2a78d6"),
-    true
+  const risco = d.por_risco || [];
+  graficos.risco = graficoBarras(
+    document.getElementById("chartRisco"),
+    risco.map(x => x.risco),
+    risco.map(x => x.qtd_lotes),
+    risco.map(x => CORES_RISCO[x.risco] || "#2a78d6"),
+    false
   );
 }
 
@@ -398,20 +429,29 @@ function classeLinha(situacao) {
   return "";
 }
 
-let ordenacao = { chave: "dias_restantes", asc: true };
+let ordenacao = { chave: "risco", asc: true };
+
+function valorOrdenacao(l, chave) {
+  if (chave === "risco") return ORDEM_RISCO.indexOf(l.risco) * 100000 + l.dias_restantes;
+  const v = l[chave];
+  if (v === null || v === undefined) return chave === "dias_para_vender" ? Infinity : "";
+  return v;
+}
 
 function linhasFiltradas() {
   const termo = document.getElementById("filtroProduto").value.trim().toLowerCase();
   const familia = document.getElementById("filtroFamilia").value;
   const situacao = document.getElementById("filtroSituacao").value;
+  const risco = document.getElementById("filtroRisco").value;
   let linhas = dadosGlobais.lotes.filter(l => {
     if (familia && l.familia !== familia) return false;
     if (situacao && l.situacao !== situacao) return false;
+    if (risco && l.risco !== risco) return false;
     if (termo && !(`${l.produto} ${l.lote}`.toLowerCase().includes(termo))) return false;
     return true;
   });
   linhas.sort((a, b) => {
-    const va = a[ordenacao.chave], vb = b[ordenacao.chave];
+    const va = valorOrdenacao(a, ordenacao.chave), vb = valorOrdenacao(b, ordenacao.chave);
     const cmp = typeof va === "number" ? va - vb : String(va).localeCompare(String(vb), "pt-BR");
     return ordenacao.asc ? cmp : -cmp;
   });
@@ -423,14 +463,16 @@ function renderTabela() {
   const corpo = document.getElementById("tabelaLotesBody");
   corpo.innerHTML = linhas.map(l => `
     <tr class="${classeLinha(l.situacao)}">
-      <td>${l.produto}</td>
+      <td class="produto">${l.produto}</td>
       <td>${l.familia}</td>
       <td>${l.lote ?? ""}</td>
-      <td>${l.fabricacao ?? ""}</td>
       <td>${l.validade ?? ""}</td>
-      <td>${l.dias_restantes}</td>
-      <td class="situacao">${l.situacao}</td>
-      <td>${formatarNumero(l.saldo)}</td>
+      <td class="num situacao">${l.dias_restantes}</td>
+      <td class="num">${formatarNumero(l.saldo)} ${l.unidade ?? ""}</td>
+      <td class="num">${l.venda_media_dia ? formatarNumero(l.venda_media_dia) : "—"}</td>
+      <td class="num">${l.dias_para_vender ?? "—"}</td>
+      <td class="num">${l.saldo_em_risco !== undefined ? formatarNumero(l.saldo_em_risco) + " " + (l.unidade ?? "") : "—"}</td>
+      <td>${l.risco ? `<span class="risco ${CLASSE_RISCO[l.risco] || ""}">${l.risco}</span>` : "—"}</td>
     </tr>
   `).join("");
 }
@@ -453,7 +495,7 @@ document.querySelectorAll("#tabelaLotes th").forEach(th => {
     renderTabela();
   });
 });
-["filtroProduto", "filtroFamilia", "filtroSituacao"].forEach(id => {
+["filtroProduto", "filtroFamilia", "filtroSituacao", "filtroRisco"].forEach(id => {
   document.getElementById(id).addEventListener("input", renderTabela);
 });
 
