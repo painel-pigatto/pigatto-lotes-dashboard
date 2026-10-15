@@ -64,13 +64,23 @@ GitHub Actions, puxando os dados direto da API do Omie.
 ## O que este dashboard mostra (e o que não mostra)
 
 Mostra, agregado e atualizado automaticamente:
-- 6 indicadores (lotes a vencer em 90 dias, vencidos, urgência ≤30 dias,
-  saldo total em risco, quantidade vendida em 12 meses, clientes candidatos);
-- gráfico de lotes por família, distribuição por urgência e Top 10 produtos
-  por quantidade vendida;
-- uma tabela com todos os lotes (produto, família, lote, fabricação,
-  validade, dias restantes, situação, saldo), com busca e filtro por família
-  e situação.
+- 6 indicadores (lotes a vencer em 90 dias, urgência ≤30 dias, perda
+  provável, risco parcial, sem giro em 12 meses, vende a tempo);
+- gráficos de lotes por família, por prazo e por risco de perda;
+- uma tabela com todos os lotes (produto, família, lote, validade, dias para
+  vencer, saldo, venda média por dia, dias para vender, saldo em risco e
+  classificação de risco), com busca e filtros por família, prazo e risco.
+
+**Como o risco é calculado:** para cada produto, a venda média diária vem dos
+pedidos faturados e não cancelados dos últimos 12 meses. Supondo que o lote que
+vence antes sai antes, o script projeta quanto do saldo de cada lote ainda
+sobra na data de validade ("saldo em risco"). Classificação: *Perda provável*
+(sobra ≥ 50% do saldo), *Risco parcial* (sobra algo), *Vende a tempo*, *Sem
+giro* (nenhuma venda em 12 meses).
+
+**Lotes já vencidos não aparecem no painel**: ficam só no e-mail interno
+de vencidos, tratado pela operação. É uma projeção pela média: não
+prevê sazonalidade nem pedidos pontuais.
 
 **Nunca mostra** nome, telefone, e-mail ou razão social de nenhum cliente —
 isso ficou de fora de propósito, porque este dashboard é público. Essa parte
@@ -83,15 +93,10 @@ vencer" no Google Sheets, de acesso restrito ao Grupo Pigatto.
   (`ConsultarProduto`) replica exatamente a lógica já validada e em produção
   na tarefa agendada de e-mail (mesma janela de 90 dias, mesmo critério de
   saldo, mesmos buckets de urgência) — alto grau de confiança.
-- A busca de **vendas dos últimos 12 meses** (`ListarPedidos`, para os
-  números de "quantidade vendida" e "clientes candidatos") foi escrita a
-  partir da documentação pública da API do Omie, mas **não foi testada contra
-  a conta real do Grupo Pigatto** nesta construção (sem acesso à chave na
-  sessão que gerou este repositório). Rode o workflow manualmente (passo 5
-  acima), confira os números contra a planilha interna já validada, e ajuste
-  `scripts/fetch_omie_data.py` (função `buscar_vendas_12_meses`) se algum nome
-  de campo da resposta do Omie na sua conta for diferente do que está no
-  código — os comentários no arquivo indicam exatamente onde olhar.
+- A busca de **vendas dos últimos 12 meses** (`ListarPedidos`, endpoint
+  `produtos/pedido`) foi conferida contra a conta real em 14/10/2026 e conta
+  só pedidos faturados e não cancelados. Se essa busca falhar, o workflow fica
+  vermelho e o `data.json` anterior é mantido, para não publicar risco errado.
 - O `docs/data.json` incluído agora é um **exemplo** (`"exemplo": true`), só
   para o dashboard não ficar em branco antes da primeira execução real. Ele
   tem os mesmos números já verificados na planilha interna em 09/10/2026. O
