@@ -70,7 +70,7 @@ dados direto da API do Omie.
 Mostra, agregado e atualizado automaticamente:
 - 6 indicadores (lotes a vencer em 90 dias, urgência ≤30 dias, perda
   provável, risco parcial, sem giro em 12 meses, vende a tempo);
-- gráficos de lotes por família, por prazo e por risco de perda;
+- tabela de risco por família, com a perda estimada de cada uma;
 - uma tabela com todos os lotes (produto, família, lote, validade, dias para
   vencer, saldo, venda média por dia, dias para vender, saldo em risco e
   classificação de risco), com busca e filtros por família, prazo e risco.

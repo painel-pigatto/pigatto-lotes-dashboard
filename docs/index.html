@@ -1,404 +1,420 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Painel Comercial — Produtos a Vencer</title>
-<meta name="description" content="Dashboard público e anonimizado de lotes a vencer em 90 dias e risco de perda pelo ritmo de vendas — Grupo Pigatto." />
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt" crossorigin="anonymous"></script>
-
+<meta name="robots" content="noindex, nofollow" />
+<title>Lotes a Vencer — Grupo Pigatto</title>
+<meta name="description" content="Painel interno do Grupo Pigatto: lotes a vencer em 90 dias, risco de perda e potenciais clientes por produto." />
+<link rel="icon" type="image/png" href="favicon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
-    color-scheme: light;
-    --surface-1: #fcfcfb;
-    --page-plane: #f9f9f7;
-    --text-primary: #0b0b0b;
-    --text-secondary: #52514e;
-    --text-muted: #898781;
-    --gridline: #e1e0d9;
-    --border: rgba(11,11,11,0.10);
-    --navy: #1f3a5f;
-    --navy-ink: #ffffff;
-
-    --blue: #2a78d6;
-    --blue-bg: #eaf2fc;
-    --blue-text: #1c5cab;
-
-    --red: #d03b3b;
-    --red-bg: #fbe9e9;
-
-    --orange-bg: #fff4e0;
-    --orange-text: #8a5a00;
-
-    --aqua: #1baf7a;
-    --aqua-bg: #e6f7f1;
-    --aqua-text: #127a57;
-
-    --violet: #4a3aa7;
-    --violet-bg: #eeecfa;
-
-    --cat-1: #2a78d6; /* blue */
-    --cat-2: #eb6834; /* orange */
-    --cat-3: #1baf7a; /* aqua */
-    --cat-4: #eda100; /* yellow */
-    --cat-5: #e87ba4; /* magenta */
-    --cat-6: #008300; /* green */
+    --navy: #0B2A46;
+    --navy2: #0E3A5F;
+    --navy3: #1B4A72;
+    --blue: #0B6FB8;
+    --orange: #F7941D;
+    --ink: #0E1B24;
+    --muted: #6B7A85;
+    --line: #E3EEF5;
+    --bg: #F3F8FC;
+    --white: #FFFFFF;
+    --red: #D64545;
+    --red-bg: #FCE8E8;
+    --amber: #C98A1B;
+    --amber-bg: #FDF3DF;
+    --purple: #8E44AD;
+    --purple-bg: #F3E9F8;
+    --green: #1E9E5A;
+    --green-bg: #E4F7EC;
+    --row-hover: #EAF3FB;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      color-scheme: dark;
-      --surface-1: #1a1a19;
-      --page-plane: #0d0d0d;
-      --text-primary: #ffffff;
-      --text-secondary: #c3c2b7;
-      --text-muted: #898781;
-      --gridline: #2c2c2a;
-      --border: rgba(255,255,255,0.10);
-      --blue-bg: #132235;
-      --blue-text: #86b6ef;
-      --red-bg: #2e1616;
-      --orange-bg: #2e2211;
-      --orange-text: #e3b25a;
-      --aqua-bg: #0f2a21;
-      --aqua-text: #5cd6a7;
-      --violet-bg: #211c3c;
-    }
-  }
-  :root[data-theme="dark"] {
-    color-scheme: dark;
-    --surface-1: #1a1a19;
-    --page-plane: #0d0d0d;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --border: rgba(255,255,255,0.10);
-    --blue-bg: #132235;
-    --blue-text: #86b6ef;
-    --red-bg: #2e1616;
-    --orange-bg: #2e2211;
-    --orange-text: #e3b25a;
-    --aqua-bg: #0f2a21;
-    --aqua-text: #5cd6a7;
-    --violet-bg: #211c3c;
-  }
-
   * { box-sizing: border-box; }
+  html, body { margin: 0; }
   body {
-    margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: var(--page-plane);
-    color: var(--text-primary);
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 14px;
   }
-  header {
-    background: var(--navy);
-    color: var(--navy-ink);
-    padding: 20px 16px;
-  }
-  header h1 { margin: 0 0 4px; font-size: 20px; }
-  header p { margin: 0; font-size: 13px; opacity: 0.85; }
-  .theme-toggle {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: var(--navy-ink);
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .wrap { position: relative; }
-  main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  h1, h2, .kpi .v { font-family: "Space Grotesk", "Inter", sans-serif; }
 
-  .banner-exemplo {
-    background: var(--orange-bg);
-    color: var(--orange-text);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 13px;
-    margin-bottom: 16px;
+  /* ---------- tela de senha ---------- */
+  #telaSenha {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: linear-gradient(160deg, var(--navy), var(--navy2));
   }
+  #telaSenha[hidden] { display: none; }
+  .login {
+    width: 100%;
+    max-width: 380px;
+    background: var(--white);
+    border-radius: 16px;
+    padding: 28px 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+  }
+  .login img { display: block; width: 170px; margin: 0 auto 18px; }
+  .login h2 { margin: 0 0 4px; font-size: 20px; color: var(--navy); text-align: center; }
+  .login p { margin: 0 0 18px; color: var(--muted); font-size: 13px; text-align: center; }
+  .login input {
+    font: inherit; width: 100%; padding: 11px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink); margin-bottom: 10px;
+  }
+  .login input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .login button {
+    font: inherit; font-weight: 700; width: 100%; padding: 11px; border: 0; border-radius: 10px;
+    background: var(--orange); color: var(--white); cursor: pointer;
+  }
+  .login button:disabled { opacity: .6; cursor: wait; }
+  #erroSenha { color: var(--red); font-size: 13px; min-height: 18px; margin: 8px 0 0; text-align: center; }
 
-  .kpis {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
+  /* ---------- layout ---------- */
+  #app { display: flex; min-height: 100vh; }
+  #app[hidden] { display: none; }
+  .sidebar {
+    width: 224px; flex-shrink: 0;
+    background: linear-gradient(180deg, var(--navy), var(--navy2));
+    color: var(--white);
+    padding: 22px 16px;
+    position: sticky; top: 0; align-self: flex-start; height: 100vh; overflow: auto;
+    display: flex; flex-direction: column;
   }
-  .kpi {
-    border-radius: 10px;
-    padding: 14px;
-    text-align: center;
-    border: 1px solid var(--border);
+  .logo { background: var(--white); border-radius: 10px; padding: 12px 14px; margin-bottom: 26px; }
+  .logo img { display: block; width: 100%; }
+  .nav a {
+    display: block; color: #CFE0EE; text-decoration: none; font-weight: 600; font-size: 13.5px;
+    padding: 10px 12px; border-radius: 8px; margin-bottom: 4px;
   }
-  .kpi .label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
+  .nav a:hover, .nav a.ativo { background: rgba(255, 255, 255, .12); color: var(--white); }
+  .side-foot { margin-top: auto; font-size: 11px; color: #9DB4C8; line-height: 1.7; padding-top: 18px; }
+  .sair {
+    margin-top: 10px; font: inherit; font-size: 12px; font-weight: 600; color: var(--white);
+    background: transparent; border: 1px solid rgba(255, 255, 255, .3); border-radius: 8px;
+    padding: 7px 10px; cursor: pointer; width: 100%;
   }
-  .kpi .value { font-size: 26px; font-weight: 700; }
-  .kpi.blue { background: var(--blue-bg); }
-  .kpi.blue .value { color: var(--blue-text); }
-  .kpi.red { background: var(--red-bg); }
-  .kpi.red .value { color: var(--red); }
-  .kpi.orange { background: var(--orange-bg); }
-  .kpi.orange .value { color: var(--orange-text); }
-  .kpi.aqua { background: var(--aqua-bg); }
-  .kpi.aqua .value { color: var(--aqua-text); }
-  .kpi.violet { background: var(--violet-bg); }
-  .kpi.violet .value { color: var(--violet); }
+  .sair:hover { background: rgba(255, 255, 255, .1); }
 
-  .charts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  .card {
-    background: var(--surface-1);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-  }
-  .card h2 { font-size: 13px; margin: 0 0 10px; color: var(--text-secondary); font-weight: 700; }
-  .card canvas { max-height: 280px; }
+  main { flex: 1; min-width: 0; padding: 28px 32px 40px; }
+  .topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .topo h1 { margin: 0; font-size: 30px; color: var(--navy); line-height: 1.15; }
+  .topo .sub { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  .status { text-align: right; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 6px; }
 
-  .table-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
-  .table-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-  .table-controls input, .table-controls select {
-    font: inherit;
-    font-size: 13px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    border: 1px solid var(--gridline);
-    background: var(--page-plane);
-    color: var(--text-primary);
+  .alerta {
+    background: var(--red-bg); border: 1px solid #F5B5B0; color: #B42318; border-radius: 12px;
+    padding: 12px 16px; margin-bottom: 18px; font-size: 13px; line-height: 1.5;
   }
+  .alerta b { font-weight: 700; }
+  .alerta[hidden] { display: none; }
+
+  /* ---------- KPIs ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .kpi { border-radius: 14px; padding: 16px 18px; color: var(--white); min-width: 0; }
+  .kpi .n { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; opacity: .92; }
+  .kpi .v { font-size: clamp(22px, 2.2vw, 30px); font-weight: 700; margin: 8px 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .d { font-size: 12px; opacity: .88; }
+  .kpi.destaque { grid-column: span 2; }
+  .k-navy { background: var(--navy); }
+  .k-blue { background: var(--blue); }
+  .k-orange { background: var(--orange); }
+  .k-red { background: var(--red); }
+  .k-amber { background: #E8A733; }
+  .k-purple { background: var(--purple); }
+  .k-green { background: var(--green); }
+
+  /* ---------- cartões e tabelas ---------- */
+  .card { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; margin-bottom: 22px; }
+  .card h2 { margin: 0 0 4px; font-size: 20px; color: var(--navy); }
+  .card .sub { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+  .tabela { overflow-x: auto; border-radius: 10px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--gridline); }
-  th { color: var(--text-secondary); font-weight: 700; cursor: pointer; white-space: nowrap; }
-  tr.vencido td.situacao { color: var(--red); font-weight: 600; }
-  tr.urgente td.situacao { color: var(--orange-text); font-weight: 600; }
-  td.num { text-align: right; white-space: nowrap; }
-  td.produto { min-width: 200px; }
-  .risco { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-  .risco.vencido, .risco.perda { background: var(--red-bg); color: var(--red); }
-  .risco.parcial { background: var(--orange-bg); color: var(--orange-text); }
-  .risco.semgiro { background: var(--violet-bg); color: var(--violet); }
-  .risco.ok { background: var(--aqua-bg); color: var(--aqua-text); }
-  .nota { color: var(--text-muted); font-size: 12px; margin: 8px 0 0; }
+  th {
+    background: var(--navy); color: var(--white); font-size: 10.5px; font-weight: 700; letter-spacing: .03em;
+    text-transform: uppercase; padding: 12px 8px; text-align: left; white-space: nowrap;
+  }
+  th[data-key] { cursor: pointer; user-select: none; }
+  th[data-key]:hover { background: var(--navy3); }
+  td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:nth-child(even) td { background: #FAFCFE; }
+  .num, th.num { text-align: right; white-space: nowrap; }
+  td.produto { min-width: 170px; font-weight: 500; }
   tr.clicavel { cursor: pointer; }
-  tr.clicavel:hover td { background: var(--blue-bg); }
-  tr.selecionado td { background: var(--blue-bg); }
-  .clientes-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 20px; }
-  .clientes-card h2 { font-size: 15px; margin: 0 0 4px; }
-  .clientes-card .sub { color: var(--text-secondary); font-size: 13px; margin: 0 0 10px; }
-  .clientes-card select { font: inherit; font-size: 13px; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--page-plane); color: var(--text-primary); width: 100%; max-width: 640px; margin-bottom: 10px; }
-  #telaSenha { max-width: 380px; margin: 12vh auto; padding: 24px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; }
-  #telaSenha h2 { margin: 0 0 6px; font-size: 18px; }
-  #telaSenha p { color: var(--text-secondary); font-size: 13px; margin: 0 0 14px; }
-  #telaSenha input { font: inherit; width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--page-plane); color: var(--text-primary); margin-bottom: 10px; }
-  #telaSenha button { font: inherit; font-weight: 700; width: 100%; padding: 10px; border: 0; border-radius: 8px; background: var(--navy); color: var(--navy-ink); cursor: pointer; }
-  #telaSenha button:disabled { opacity: .6; cursor: wait; }
-  #erroSenha { color: var(--red); font-size: 13px; min-height: 18px; margin: 4px 0 0; }
+  tr.clicavel:hover td { background: var(--row-hover); }
+  tr.selecionado td { background: var(--row-hover) !important; box-shadow: inset 0 0 0 0 transparent; }
+  tr.selecionado td:first-child { box-shadow: inset 4px 0 0 var(--orange); }
+  .dias-urg { color: var(--red); font-weight: 700; }
+  .dias-med { color: var(--amber); font-weight: 700; }
+  .total td { font-weight: 700; background: #EEF4FA !important; }
 
-  footer { max-width: 1200px; margin: 0 auto; padding: 8px 16px 32px; color: var(--text-muted); font-size: 12px; }
-  footer a { color: inherit; }
+  .risco { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .risco.perda { background: var(--red-bg); color: var(--red); }
+  .risco.parcial { background: var(--amber-bg); color: var(--amber); }
+  .risco.semgiro { background: var(--purple-bg); color: var(--purple); }
+  .risco.ok { background: var(--green-bg); color: var(--green); }
+
+  .controles { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .controles input, .controles select, #seletorProduto {
+    font: inherit; font-size: 13px; padding: 9px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  }
+  .controles input { flex: 1 1 220px; min-width: 0; }
+  #seletorProduto { width: 100%; max-width: 680px; margin-bottom: 10px; }
+  #clientesResumo { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+  .vazio { color: var(--muted); font-size: 13px; padding: 8px 0; }
+  .nota { color: var(--muted); font-size: 12px; margin: 12px 0 0; line-height: 1.5; }
+  footer { color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+  @media (max-width: 1420px) {
+    .col-cmc { display: none; }
+  }
+  @media (max-width: 1320px) {
+    .col-dv { display: none; }
+    .sidebar { width: 196px; }
+  }
+  @media (max-width: 1100px) {
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 860px) {
+    #app { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; padding: 14px 16px; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .logo { margin: 0; padding: 8px 10px; width: 130px; }
+    .nav { display: flex; flex-wrap: wrap; gap: 4px; }
+    .nav a { margin: 0; padding: 8px 10px; font-size: 12.5px; }
+    .side-foot { display: none; }
+    main { padding: 18px 16px 32px; }
+    .topo h1 { font-size: 24px; }
+    .status { text-align: left; }
+    .kpi .v { font-size: 22px; }
+    .card { padding: 16px; }
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Painel Comercial — Produtos a Vencer</h1>
-      <p id="subtitulo">Lotes que vencem nos próximos 90 dias, com a projeção de quanto deve vencer sem ser vendido no ritmo dos últimos 12 meses. Uso interno — não compartilhe a senha fora do time.</p>
-      <button class="theme-toggle" id="themeToggle" type="button">Alternar tema</button>
-    </header>
-    <form id="telaSenha" autocomplete="on">
-      <h2>Acesso restrito</h2>
-      <p>Painel interno do Grupo Pigatto. Digite a senha fornecida pela gestão.</p>
-      <input type="password" id="campoSenha" placeholder="Senha" autocomplete="current-password" required />
-      <button type="submit" id="botaoSenha">Entrar</button>
-      <p id="erroSenha"></p>
-    </form>
-    <main id="conteudo" hidden>
-      <div id="bannerExemplo" class="banner-exemplo" hidden>
-        Estes são dados de exemplo. O GitHub Action ainda não rodou com as credenciais do Omie configuradas — veja o README do repositório.
-      </div>
 
-      <section class="kpis" id="kpis"></section>
-
-      <section class="charts">
-        <div class="card">
-          <h2>Lotes a vencer por família</h2>
-          <canvas id="chartFamilia"></canvas>
-        </div>
-        <div class="card">
-          <h2>Distribuição por urgência</h2>
-          <canvas id="chartUrgencia"></canvas>
-        </div>
-        <div class="card">
-          <h2>Lotes por risco de perda</h2>
-          <canvas id="chartRisco"></canvas>
-        </div>
-      </section>
-
-      <section class="clientes-card" id="clientes">
-        <h2>Potenciais clientes por produto</h2>
-        <p class="sub">Escolha um produto (ou clique numa linha da tabela abaixo) para ver quem comprou nos últimos 12 meses.</p>
-        <select id="seletorProduto"><option value="">Selecione um produto…</option></select>
-        <div id="clientesResumo" class="sub"></div>
-        <div style="overflow-x:auto">
-          <table id="tabelaClientes" hidden>
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Cidade</th>
-                <th>Qtd. 12 meses</th>
-                <th>Última compra</th>
-                <th>Vendedor</th>
-                <th>Contato</th>
-                <th>Telefone</th>
-                <th>E-mail</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaClientesBody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="table-card">
-        <div class="table-controls">
-          <input type="search" id="filtroProduto" placeholder="Buscar produto ou lote…" />
-          <select id="filtroFamilia"><option value="">Todas as famílias</option></select>
-          <select id="filtroSituacao">
-            <option value="">Todos os prazos</option>
-            <option value="≤ 30 dias">≤ 30 dias</option>
-            <option value="31–60 dias">31–60 dias</option>
-            <option value="61–90 dias">61–90 dias</option>
-          </select>
-          <select id="filtroRisco">
-            <option value="">Todos os riscos</option>
-            <option value="Perda provável">Perda provável</option>
-            <option value="Risco parcial">Risco parcial</option>
-            <option value="Sem giro">Sem giro</option>
-            <option value="Vende a tempo">Vende a tempo</option>
-          </select>
-        </div>
-        <div style="overflow-x:auto">
-          <table id="tabelaLotes">
-            <thead>
-              <tr>
-                <th data-key="produto">Produto</th>
-                <th data-key="lote">Lote</th>
-                <th data-key="validade">Validade</th>
-                <th data-key="dias_restantes">Dias p/ vencer</th>
-                <th data-key="saldo">Saldo</th>
-                <th data-key="venda_media_dia">Venda/dia</th>
-                <th data-key="dias_para_vender">Dias p/ vender</th>
-                <th data-key="saldo_em_risco">Saldo em risco</th>
-                <th data-key="risco">Risco</th>
-                <th data-key="cmc">CMC unit.</th>
-                <th data-key="perda_estimada">Perda estimada</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaLotesBody"></tbody>
-          </table>
-        </div>
-        <p class="nota">Projeção pelo ritmo médio de vendas faturadas dos últimos 12 meses, supondo que o lote que vence antes sai antes. "Saldo em risco" é a quantidade que deve sobrar na data de validade, na unidade do produto. "Perda estimada" = saldo em risco × CMC. Não considera sazonalidade nem pedidos pontuais.</p>
-      </section>
-    </main>
-    <footer>
-      Painel gerado automaticamente a partir do Omie (<span id="geradoEm">—</span>). Lotes já vencidos não aparecem aqui: são tratados pela operação.
-      Dados internos e confidenciais do Grupo Pigatto (clientes, custos): uso exclusivo do time, não compartilhe a senha nem prints fora da empresa.
-    </footer>
+<form id="telaSenha" autocomplete="on">
+  <div class="login">
+    <img src="logo-pigatto.png" alt="Grupo Pigatto" />
+    <h2>Lotes a Vencer</h2>
+    <p>Painel interno. Digite a senha fornecida pela gestão.</p>
+    <input type="password" id="campoSenha" placeholder="Senha" autocomplete="current-password" required />
+    <button type="submit" id="botaoSenha">Entrar</button>
+    <p id="erroSenha"></p>
   </div>
+</form>
+
+<div id="app" hidden>
+  <aside class="sidebar">
+    <div class="logo"><img src="logo-pigatto.png" alt="Grupo Pigatto" /></div>
+    <nav class="nav">
+      <a href="#resumo">Resumo</a>
+      <a href="#familias">Risco por família</a>
+      <a href="#clientes">Clientes por produto</a>
+      <a href="#lotes">Lotes</a>
+    </nav>
+    <div class="side-foot">
+      Fonte: Omie<br />
+      Atualização diária, 08:00<br />
+      Dados de <span id="geradoEmSide">—</span>
+      <button type="button" class="sair" id="botaoSair">Sair</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topo" id="resumo">
+      <div>
+        <h1>Painel de Lotes a Vencer</h1>
+        <p class="sub">Lotes que vencem nos próximos 90 dias, risco de perda pelo ritmo de vendas e potenciais clientes por produto.</p>
+      </div>
+      <div class="status"><span class="dot"></span>Dados do Omie<br />Atualizado em <span id="geradoEm">—</span></div>
+    </div>
+
+    <div class="alerta" id="alerta" hidden></div>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="card" id="familias">
+      <h2>Risco por família</h2>
+      <p class="sub">Quantidade de lotes por classificação de risco e perda estimada se nada for feito.</p>
+      <div class="tabela">
+        <table>
+          <thead>
+            <tr>
+              <th>Família</th>
+              <th class="num">Lotes</th>
+              <th class="num">Perda provável</th>
+              <th class="num">Risco parcial</th>
+              <th class="num">Sem giro</th>
+              <th class="num">Vende a tempo</th>
+              <th class="num">Perda estimada</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaFamiliasBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" id="clientes">
+      <h2>Potenciais clientes por produto</h2>
+      <p class="sub">Escolha um produto, ou clique numa linha da tabela de lotes, para ver quem comprou nos últimos 12 meses.</p>
+      <select id="seletorProduto"><option value="">Selecione um produto…</option></select>
+      <p id="clientesResumo"></p>
+      <div class="tabela" id="blocoClientes" hidden>
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Cidade</th>
+              <th class="num">Qtd. 12 meses</th>
+              <th>Última compra</th>
+              <th>Vendedor</th>
+              <th>Contato</th>
+              <th>Telefone</th>
+              <th>E-mail</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaClientesBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" id="lotes">
+      <h2>Lotes</h2>
+      <p class="sub">Clique no título de uma coluna para ordenar.</p>
+      <div class="controles">
+        <input type="search" id="filtroProduto" placeholder="Buscar produto ou lote…" />
+        <select id="filtroFamilia"><option value="">Todas as famílias</option></select>
+        <select id="filtroSituacao">
+          <option value="">Todos os prazos</option>
+          <option value="≤ 30 dias">≤ 30 dias</option>
+          <option value="31–60 dias">31–60 dias</option>
+          <option value="61–90 dias">61–90 dias</option>
+        </select>
+        <select id="filtroRisco">
+          <option value="">Todos os riscos</option>
+          <option value="Perda provável">Perda provável</option>
+          <option value="Risco parcial">Risco parcial</option>
+          <option value="Sem giro">Sem giro</option>
+          <option value="Vende a tempo">Vende a tempo</option>
+        </select>
+      </div>
+      <div class="tabela">
+        <table id="tabelaLotes">
+          <thead>
+            <tr>
+              <th data-key="produto">Produto</th>
+              <th data-key="lote">Lote</th>
+              <th data-key="validade">Validade</th>
+              <th data-key="dias_restantes" class="num">Dias p/ vencer</th>
+              <th data-key="saldo" class="num">Saldo</th>
+              <th data-key="dias_para_vender" class="num col-dv">Dias p/ vender</th>
+              <th data-key="saldo_em_risco" class="num">Saldo em risco</th>
+              <th data-key="risco">Risco</th>
+              <th data-key="cmc" class="num col-cmc">CMC unit.</th>
+              <th data-key="perda_estimada" class="num">Perda estimada</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaLotesBody"></tbody>
+        </table>
+      </div>
+      <p class="nota">Projeção pelo ritmo médio de vendas faturadas dos últimos 12 meses, supondo que o lote que vence antes sai antes. "Dias p/ vender" é quanto tempo o ritmo atual leva para consumir o saldo do lote (e dos que vencem antes dele). "Saldo em risco" é o que deve sobrar na data de validade, na unidade do produto. "Perda estimada" = saldo em risco × CMC. Não considera sazonalidade nem pedidos pontuais.</p>
+    </section>
+
+    <footer>
+      Lotes já vencidos não aparecem aqui: são tratados pela operação.
+      Dados internos e confidenciais do Grupo Pigatto (clientes e custos): uso exclusivo do time — não compartilhe a senha nem prints fora da empresa.
+    </footer>
+  </main>
+</div>
 
 <script>
-const CORES_FAMILIA = {
-  "Adesivos Estruturais": "#2a78d6",
-  "Chemlok": "#eb6834",
-  "Marbocote": "#1baf7a",
-  "Bio-Chem": "#eda100",
-  "Silquim": "#e87ba4",
-  "Outras": "#008300",
-};
 const ORDEM_RISCO = ["Perda provável", "Risco parcial", "Sem giro", "Vende a tempo"];
-const CORES_RISCO = {
-  "Perda provável": "#d03b3b",
-  "Risco parcial": "#fab219",
-  "Sem giro": "#4a3aa7",
-  "Vende a tempo": "#1baf7a",
-};
-const CLASSE_RISCO = {
-  "Perda provável": "perda", "Risco parcial": "parcial",
-  "Sem giro": "semgiro", "Vende a tempo": "ok",
-};
-const CORES_URGENCIA = {
-  "≤ 30 dias": "#fab219",
-  "31–60 dias": "#ec835a",
-  "61–90 dias": "#0ca30c",
-};
-
-function temaAtual() {
-  const stamp = document.documentElement.getAttribute("data-theme");
-  if (stamp) return stamp;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-function corTexto() {
-  return getComputedStyle(document.documentElement).getPropertyValue("--text-secondary").trim() || "#52514e";
-}
-function corGrade() {
-  return getComputedStyle(document.documentElement).getPropertyValue("--gridline").trim() || "#e1e0d9";
-}
-
-function aplicarTemaSalvo() {
-  try {
-    const salvo = localStorage.getItem("painel-tema");
-    if (salvo === "light" || salvo === "dark") {
-      document.documentElement.setAttribute("data-theme", salvo);
-    }
-  } catch (e) { /* localStorage pode falhar em alguns navegadores — tudo bem seguir no tema padrão */ }
-}
-aplicarTemaSalvo();
-
-document.getElementById("themeToggle").addEventListener("click", () => {
-  const atual = temaAtual();
-  const novo = atual === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", novo);
-  try { localStorage.setItem("painel-tema", novo); } catch (e) { /* ignorar */ }
-  redesenharGraficos();
-});
+const CLASSE_RISCO = { "Perda provável": "perda", "Risco parcial": "parcial", "Sem giro": "semgiro", "Vende a tempo": "ok" };
 
 let dadosGlobais = null;
-let graficos = {};
-
-function formatarReais(n) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
-}
+let produtoSelecionado = "";
+let ordenacao = { chave: "risco", asc: true };
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+function formatarNumero(n) {
+  return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(n);
+}
+function formatarReais(n) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
+}
+function plural(n, s, p) { return `${n} ${n === 1 ? s : p}`; }
 
-let produtoSelecionado = "";
+function montarKpis(k) {
+  const defs = [
+    { v: formatarReais(k.perda_estimada_total ?? 0), n: "Perda estimada", d: k.lotes_sem_cmc ? `${plural(k.lotes_sem_cmc, "lote", "lotes")} sem CMC fora do total` : "se nada for feito", c: "k-navy destaque" },
+    { v: formatarNumero(k.lotes_a_vencer_90d ?? 0), n: "Lotes a vencer", d: "próximos 90 dias", c: "k-blue" },
+    { v: formatarNumero(k.urgencia_30d ?? 0), n: "Vencem em até 30 dias", d: "prioridade máxima", c: "k-orange" },
+    { v: formatarNumero(k.lotes_perda_provavel ?? 0), n: "Perda provável", d: "sobra ≥ 50% do saldo", c: "k-red" },
+    { v: formatarNumero(k.lotes_risco_parcial ?? 0), n: "Risco parcial", d: "sobra parte do saldo", c: "k-amber" },
+    { v: formatarNumero(k.lotes_sem_giro ?? 0), n: "Sem giro", d: "sem venda em 12 meses", c: "k-purple" },
+    { v: formatarNumero(k.lotes_vende_a_tempo ?? 0), n: "Vende a tempo", d: "sai no ritmo atual", c: "k-green" },
+  ];
+  document.getElementById("kpis").innerHTML = defs.map(x => `
+    <div class="kpi ${x.c}">
+      <div class="n">${x.n}</div>
+      <div class="v" title="${esc(x.v)}">${x.v}</div>
+      <div class="d">${x.d}</div>
+    </div>`).join("");
+
+  const alerta = document.getElementById("alerta");
+  if (k.lotes_perda_provavel) {
+    alerta.innerHTML = `<b>${plural(k.lotes_perda_provavel, "lote com perda provável", "lotes com perda provável")}</b> e ${plural(k.lotes_risco_parcial ?? 0, "lote", "lotes")} com risco parcial. ` +
+      `Perda estimada se nada for feito: <b>${formatarReais(k.perda_estimada_total ?? 0)}</b>. Use a tabela de clientes para direcionar as ofertas.`;
+    alerta.hidden = false;
+  } else {
+    alerta.hidden = true;
+  }
+}
+
+function montarFamilias(lotes) {
+  const fam = {};
+  lotes.forEach(l => {
+    const f = fam[l.familia] ||= { lotes: 0, perda: 0, r: {} };
+    f.lotes += 1;
+    f.perda += l.perda_estimada || 0;
+    f.r[l.risco] = (f.r[l.risco] || 0) + 1;
+  });
+  const linhas = Object.entries(fam).sort((a, b) => b[1].perda - a[1].perda);
+  const tot = { lotes: 0, perda: 0, r: {} };
+  linhas.forEach(([, f]) => {
+    tot.lotes += f.lotes; tot.perda += f.perda;
+    ORDEM_RISCO.forEach(r => { tot.r[r] = (tot.r[r] || 0) + (f.r[r] || 0); });
+  });
+  const linha = (nome, f, cls) => `
+    <tr class="${cls || ""}">
+      <td>${esc(nome)}</td>
+      <td class="num">${f.lotes}</td>
+      ${ORDEM_RISCO.map(r => `<td class="num">${f.r[r] || 0}</td>`).join("")}
+      <td class="num">${formatarReais(f.perda)}</td>
+    </tr>`;
+  document.getElementById("tabelaFamiliasBody").innerHTML =
+    linhas.map(([nome, f]) => linha(nome, f)).join("") + (linhas.length > 1 ? linha("Total", tot, "total") : "");
+}
 
 function montarSeletorProdutos(dados) {
   const sel = document.getElementById("seletorProduto");
-  const produtos = Object.entries(dados.produtos || {})
-    .sort((a, b) => a[1].produto.localeCompare(b[1].produto, "pt-BR"));
-  produtos.forEach(([cod, p]) => {
-    const opt = document.createElement("option");
-    opt.value = cod;
-    opt.textContent = `${p.produto} (${p.clientes.length} cliente${p.clientes.length === 1 ? "" : "s"})`;
-    sel.appendChild(opt);
-  });
+  Object.entries(dados.produtos || {})
+    .sort((a, b) => a[1].produto.localeCompare(b[1].produto, "pt-BR"))
+    .forEach(([cod, p]) => {
+      const opt = document.createElement("option");
+      opt.value = cod;
+      opt.textContent = `${p.produto} (${plural(p.clientes.length, "cliente", "clientes")})`;
+      sel.appendChild(opt);
+    });
   sel.addEventListener("change", () => selecionarProduto(sel.value, false));
 }
 
@@ -406,19 +422,21 @@ function selecionarProduto(cod, rolar) {
   produtoSelecionado = cod;
   document.getElementById("seletorProduto").value = cod;
   const p = (dadosGlobais.produtos || {})[cod];
-  const tabela = document.getElementById("tabelaClientes");
+  const bloco = document.getElementById("blocoClientes");
   const resumo = document.getElementById("clientesResumo");
   if (!p) {
-    tabela.hidden = true;
+    bloco.hidden = true;
     resumo.textContent = "";
   } else {
     const lotes = dadosGlobais.lotes.filter(l => l.cod === cod);
     const emRisco = lotes.reduce((s, l) => s + (l.saldo_em_risco || 0), 0);
-    resumo.innerHTML = `${lotes.length} lote${lotes.length === 1 ? "" : "s"} na janela de 90 dias · saldo em risco ${formatarNumero(emRisco)} ${esc(p.unidade)}` +
-      (p.clientes.length ? "" : " · <b>nenhum cliente comprou este produto nos últimos 12 meses</b>");
+    const perda = lotes.reduce((s, l) => s + (l.perda_estimada || 0), 0);
+    resumo.innerHTML = `${plural(lotes.length, "lote", "lotes")} na janela de 90 dias · saldo em risco <b>${formatarNumero(emRisco)} ${esc(p.unidade)}</b>` +
+      (perda ? ` · perda estimada <b>${formatarReais(perda)}</b>` : "") +
+      (p.clientes.length ? ` · ${plural(p.clientes.length, "cliente", "clientes")}` : " · <b>nenhum cliente comprou este produto nos últimos 12 meses</b>");
     document.getElementById("tabelaClientesBody").innerHTML = p.clientes.map(c => `
       <tr>
-        <td>${esc(c.razao_social)}${c.nome_fantasia && c.nome_fantasia !== c.razao_social ? `<br><span style="color:var(--text-muted);font-size:12px">${esc(c.nome_fantasia)}</span>` : ""}</td>
+        <td>${esc(c.razao_social)}${c.nome_fantasia && c.nome_fantasia !== c.razao_social ? `<br><span style="color:var(--muted);font-size:12px">${esc(c.nome_fantasia)}</span>` : ""}</td>
         <td>${esc(c.cidade)}</td>
         <td class="num">${formatarNumero(c.qtd_12m)} ${esc(p.unidade)}</td>
         <td>${esc(c.ultima_compra)}</td>
@@ -427,110 +445,20 @@ function selecionarProduto(cod, rolar) {
         <td style="white-space:nowrap">${esc(c.telefone)}</td>
         <td>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</td>
       </tr>`).join("");
-    tabela.hidden = p.clientes.length === 0;
+    bloco.hidden = p.clientes.length === 0;
   }
   renderTabela();
   if (rolar) document.getElementById("clientes").scrollIntoView({ behavior: "smooth" });
 }
 
-function formatarNumero(n) {
-  return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(n);
-}
-
-function montarKpis(kpis) {
-  const defs = [
-    { chave: "lotes_a_vencer_90d", label: "Lotes a vencer (90 dias)", classe: "blue" },
-    { chave: "urgencia_30d", label: "Urgência ≤ 30 dias", classe: "orange" },
-    { chave: "lotes_perda_provavel", label: "Perda provável", classe: "red" },
-    { chave: "lotes_risco_parcial", label: "Risco parcial", classe: "orange" },
-    { chave: "lotes_sem_giro", label: "Sem giro (12 meses)", classe: "violet" },
-    { chave: "lotes_vende_a_tempo", label: "Vende a tempo", classe: "aqua" },
-    { chave: "perda_estimada_total", label: "Perda estimada (R$)", classe: "red", reais: true },
-  ];
-  const el = document.getElementById("kpis");
-  el.innerHTML = defs.map(d => `
-    <div class="kpi ${d.classe}">
-      <div class="label">${d.label}</div>
-      <div class="value">${d.reais ? formatarReais(kpis[d.chave] ?? 0) : formatarNumero(kpis[d.chave] ?? 0)}</div>
-    </div>
-  `).join("");
-}
-
-function graficoBarras(ctx, labels, valores, cores, horizontal) {
-  return new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{ data: valores, backgroundColor: cores, borderRadius: 4, maxBarThickness: 36 }],
-    },
-    options: {
-      indexAxis: horizontal ? "y" : "x",
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: corTexto() }, grid: { color: corGrade() } },
-        y: { ticks: { color: corTexto() }, grid: { color: corGrade() } },
-      },
-    },
-  });
-}
-
-function destruirGraficos() {
-  Object.values(graficos).forEach(g => g && g.destroy());
-  graficos = {};
-}
-
-function redesenharGraficos() {
-  if (!dadosGlobais) return;
-  if (typeof Chart === "undefined") {
-    console.warn("Chart.js não carregou (ex.: bloqueio de rede ao CDN) — gráficos ficarão ocultos, mas KPIs e tabela continuam normalmente.");
-    document.querySelectorAll(".charts .card canvas").forEach(c => {
-      c.insertAdjacentHTML("afterend", '<p style="color:var(--text-muted);font-size:12px">Gráfico indisponível (falha ao carregar Chart.js).</p>');
-      c.remove();
-    });
-    return;
-  }
-  destruirGraficos();
-  const d = dadosGlobais;
-
-  graficos.familia = graficoBarras(
-    document.getElementById("chartFamilia"),
-    d.por_familia.map(x => x.familia),
-    d.por_familia.map(x => x.qtd_lotes),
-    d.por_familia.map(x => CORES_FAMILIA[x.familia] || "#2a78d6"),
-    false
-  );
-
-  graficos.urgencia = graficoBarras(
-    document.getElementById("chartUrgencia"),
-    d.por_urgencia.map(x => x.situacao),
-    d.por_urgencia.map(x => x.qtd_lotes),
-    d.por_urgencia.map(x => CORES_URGENCIA[x.situacao] || "#d03b3b"),
-    false
-  );
-
-  const risco = d.por_risco || [];
-  graficos.risco = graficoBarras(
-    document.getElementById("chartRisco"),
-    risco.map(x => x.risco),
-    risco.map(x => x.qtd_lotes),
-    risco.map(x => CORES_RISCO[x.risco] || "#2a78d6"),
-    false
-  );
-}
-
-function classeLinha(situacao) {
-  if (situacao === "≤ 30 dias") return "urgente";
-  return "";
-}
-
-let ordenacao = { chave: "risco", asc: true };
-
 function valorOrdenacao(l, chave) {
   if (chave === "risco") return ORDEM_RISCO.indexOf(l.risco) * 100000 + l.dias_restantes;
+  if (chave === "validade") {
+    const [d, m, a] = String(l.validade || "").split("/");
+    return a ? Number(a + m + d) : 0;
+  }
   const v = l[chave];
-  if (v === null || v === undefined) return chave === "dias_para_vender" ? Infinity : "";
+  if (v === null || v === undefined) return typeof l.saldo === "number" && chave !== "produto" && chave !== "lote" ? -1 : "";
   return v;
 }
 
@@ -539,16 +467,14 @@ function linhasFiltradas() {
   const familia = document.getElementById("filtroFamilia").value;
   const situacao = document.getElementById("filtroSituacao").value;
   const risco = document.getElementById("filtroRisco").value;
-  let linhas = dadosGlobais.lotes.filter(l => {
-    if (familia && l.familia !== familia) return false;
-    if (situacao && l.situacao !== situacao) return false;
-    if (risco && l.risco !== risco) return false;
-    if (termo && !(`${l.produto} ${l.lote}`.toLowerCase().includes(termo))) return false;
-    return true;
-  });
+  const linhas = dadosGlobais.lotes.filter(l =>
+    (!familia || l.familia === familia) &&
+    (!situacao || l.situacao === situacao) &&
+    (!risco || l.risco === risco) &&
+    (!termo || `${l.produto} ${l.lote}`.toLowerCase().includes(termo)));
   linhas.sort((a, b) => {
     const va = valorOrdenacao(a, ordenacao.chave), vb = valorOrdenacao(b, ordenacao.chave);
-    const cmp = typeof va === "number" ? va - vb : String(va).localeCompare(String(vb), "pt-BR");
+    const cmp = typeof va === "number" && typeof vb === "number" ? va - vb : String(va).localeCompare(String(vb), "pt-BR");
     return ordenacao.asc ? cmp : -cmp;
   });
   return linhas;
@@ -557,49 +483,53 @@ function linhasFiltradas() {
 function renderTabela() {
   const linhas = linhasFiltradas();
   const corpo = document.getElementById("tabelaLotesBody");
-  corpo.innerHTML = linhas.map(l => `
-    <tr class="${classeLinha(l.situacao)} clicavel${l.cod === produtoSelecionado ? " selecionado" : ""}" data-cod="${esc(l.cod)}">
+  if (!linhas.length) {
+    corpo.innerHTML = `<tr><td colspan="10" class="vazio">Nenhum lote com esses filtros.</td></tr>`;
+    return;
+  }
+  corpo.innerHTML = linhas.map(l => {
+    const dias = l.dias_restantes <= 30 ? "dias-urg" : l.dias_restantes <= 60 ? "dias-med" : "";
+    return `
+    <tr class="clicavel${l.cod === produtoSelecionado ? " selecionado" : ""}" data-cod="${esc(l.cod)}">
       <td class="produto">${esc(l.produto)}</td>
-      <td>${l.lote ?? ""}</td>
-      <td>${l.validade ?? ""}</td>
-      <td class="num situacao">${l.dias_restantes}</td>
-      <td class="num">${formatarNumero(l.saldo)} ${l.unidade ?? ""}</td>
-      <td class="num">${l.venda_media_dia ? formatarNumero(l.venda_media_dia) : "—"}</td>
-      <td class="num">${l.dias_para_vender ?? "—"}</td>
-      <td class="num">${l.saldo_em_risco !== undefined ? formatarNumero(l.saldo_em_risco) + " " + (l.unidade ?? "") : "—"}</td>
-      <td>${l.risco ? `<span class="risco ${CLASSE_RISCO[l.risco] || ""}">${l.risco}</span>` : "—"}</td>
-      <td class="num">${l.cmc ? formatarReais(l.cmc) : "—"}</td>
+      <td>${esc(l.lote)}</td>
+      <td>${esc(l.validade)}</td>
+      <td class="num ${dias}">${l.dias_restantes}</td>
+      <td class="num">${formatarNumero(l.saldo)} ${esc(l.unidade)}</td>
+      <td class="num col-dv">${l.dias_para_vender ?? "—"}</td>
+      <td class="num">${formatarNumero(l.saldo_em_risco ?? 0)} ${esc(l.unidade)}</td>
+      <td>${l.risco ? `<span class="risco ${CLASSE_RISCO[l.risco] || ""}">${esc(l.risco)}</span>` : "—"}</td>
+      <td class="num col-cmc">${l.cmc ? formatarReais(l.cmc) : "—"}</td>
       <td class="num">${l.perda_estimada === null || l.perda_estimada === undefined ? "—" : formatarReais(l.perda_estimada)}</td>
-    </tr>
-  `).join("");
+    </tr>`;
+  }).join("");
 }
 
 function montarFiltros(lotes) {
-  const familias = [...new Set(lotes.map(l => l.familia))].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const sel = document.getElementById("filtroFamilia");
-  familias.forEach(f => {
+  [...new Set(lotes.map(l => l.familia))].sort((a, b) => a.localeCompare(b, "pt-BR")).forEach(f => {
     const opt = document.createElement("option");
     opt.value = f; opt.textContent = f;
     sel.appendChild(opt);
   });
 }
 
-document.querySelectorAll("#tabelaLotes th").forEach(th => {
+document.querySelectorAll("#tabelaLotes th[data-key]").forEach(th => {
   th.addEventListener("click", () => {
     const chave = th.dataset.key;
-    if (ordenacao.chave === chave) ordenacao.asc = !ordenacao.asc;
-    else ordenacao = { chave, asc: true };
+    ordenacao = ordenacao.chave === chave ? { chave, asc: !ordenacao.asc } : { chave, asc: true };
     renderTabela();
   });
+});
+["filtroProduto", "filtroFamilia", "filtroSituacao", "filtroRisco"].forEach(id => {
+  document.getElementById(id).addEventListener("input", renderTabela);
 });
 document.getElementById("tabelaLotesBody").addEventListener("click", ev => {
   const tr = ev.target.closest("tr[data-cod]");
   if (tr) selecionarProduto(tr.dataset.cod, true);
 });
-["filtroProduto", "filtroFamilia", "filtroSituacao", "filtroRisco"].forEach(id => {
-  document.getElementById(id).addEventListener("input", renderTabela);
-});
 
+/* ---------- senha e descriptografia ---------- */
 function b64(s) {
   return Uint8Array.from(atob(s), c => c.charCodeAt(0));
 }
@@ -617,14 +547,15 @@ async function descriptografar(pacote, senha) {
 function exibir(dados) {
   dadosGlobais = dados;
   document.getElementById("telaSenha").hidden = true;
-  document.getElementById("conteudo").hidden = false;
-  document.getElementById("bannerExemplo").hidden = !dados.exemplo;
-  document.getElementById("geradoEm").textContent = new Date(dados.gerado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
-  montarKpis(dados.kpis);
-  montarFiltros(dados.lotes);
+  document.getElementById("app").hidden = false;
+  const quando = new Date(dados.gerado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  document.getElementById("geradoEm").textContent = quando;
+  document.getElementById("geradoEmSide").textContent = quando;
+  montarKpis(dados.kpis || {});
+  montarFamilias(dados.lotes || []);
+  montarFiltros(dados.lotes || []);
   montarSeletorProdutos(dados);
-  try { redesenharGraficos(); } catch (e) { console.error("Falha ao desenhar gráficos:", e); }
-  try { renderTabela(); } catch (e) { console.error("Falha ao montar tabela:", e); }
+  renderTabela();
 }
 
 async function tentarSenha(senha, silencioso) {
@@ -634,7 +565,8 @@ async function tentarSenha(senha, silencioso) {
   erro.textContent = silencioso ? "" : "Verificando…";
   try {
     const resp = await fetch("./data.enc.json", { cache: "no-store" });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    if (resp.status === 404) throw new Error("os dados ainda não foram gerados. Rode a atualização em Actions no GitHub.");
+    if (!resp.ok) throw new Error(`erro HTTP ${resp.status}.`);
     const pacote = await resp.json();
     let dados;
     try {
@@ -647,7 +579,7 @@ async function tentarSenha(senha, silencioso) {
     try { sessionStorage.setItem("painel-senha", senha); } catch (_) { /* ignorar */ }
     exibir(dados);
   } catch (e) {
-    erro.textContent = `Não foi possível carregar os dados: ${e.message}`;
+    erro.textContent = `Não foi possível carregar: ${e.message}`;
   } finally {
     botao.disabled = false;
   }
@@ -656,6 +588,10 @@ async function tentarSenha(senha, silencioso) {
 document.getElementById("telaSenha").addEventListener("submit", ev => {
   ev.preventDefault();
   tentarSenha(document.getElementById("campoSenha").value, false);
+});
+document.getElementById("botaoSair").addEventListener("click", () => {
+  try { sessionStorage.removeItem("painel-senha"); } catch (_) { /* ignorar */ }
+  location.reload();
 });
 
 try {
