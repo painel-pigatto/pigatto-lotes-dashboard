@@ -124,7 +124,7 @@
 
   .kpis {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
     margin-bottom: 20px;
   }
@@ -181,18 +181,32 @@
     color: var(--text-primary);
   }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--gridline); }
+  th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--gridline); }
   th { color: var(--text-secondary); font-weight: 700; cursor: pointer; white-space: nowrap; }
   tr.vencido td.situacao { color: var(--red); font-weight: 600; }
   tr.urgente td.situacao { color: var(--orange-text); font-weight: 600; }
   td.num { text-align: right; white-space: nowrap; }
-  td.produto { min-width: 220px; }
+  td.produto { min-width: 200px; }
   .risco { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .risco.vencido, .risco.perda { background: var(--red-bg); color: var(--red); }
   .risco.parcial { background: var(--orange-bg); color: var(--orange-text); }
   .risco.semgiro { background: var(--violet-bg); color: var(--violet); }
   .risco.ok { background: var(--aqua-bg); color: var(--aqua-text); }
   .nota { color: var(--text-muted); font-size: 12px; margin: 8px 0 0; }
+  tr.clicavel { cursor: pointer; }
+  tr.clicavel:hover td { background: var(--blue-bg); }
+  tr.selecionado td { background: var(--blue-bg); }
+  .clientes-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 20px; }
+  .clientes-card h2 { font-size: 15px; margin: 0 0 4px; }
+  .clientes-card .sub { color: var(--text-secondary); font-size: 13px; margin: 0 0 10px; }
+  .clientes-card select { font: inherit; font-size: 13px; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--page-plane); color: var(--text-primary); width: 100%; max-width: 640px; margin-bottom: 10px; }
+  #telaSenha { max-width: 380px; margin: 12vh auto; padding: 24px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; }
+  #telaSenha h2 { margin: 0 0 6px; font-size: 18px; }
+  #telaSenha p { color: var(--text-secondary); font-size: 13px; margin: 0 0 14px; }
+  #telaSenha input { font: inherit; width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--page-plane); color: var(--text-primary); margin-bottom: 10px; }
+  #telaSenha button { font: inherit; font-weight: 700; width: 100%; padding: 10px; border: 0; border-radius: 8px; background: var(--navy); color: var(--navy-ink); cursor: pointer; }
+  #telaSenha button:disabled { opacity: .6; cursor: wait; }
+  #erroSenha { color: var(--red); font-size: 13px; min-height: 18px; margin: 4px 0 0; }
 
   footer { max-width: 1200px; margin: 0 auto; padding: 8px 16px 32px; color: var(--text-muted); font-size: 12px; }
   footer a { color: inherit; }
@@ -202,10 +216,17 @@
   <div class="wrap">
     <header>
       <h1>Painel Comercial — Produtos a Vencer</h1>
-      <p id="subtitulo">Lotes que vencem nos próximos 90 dias, com a projeção de quanto deve vencer sem ser vendido no ritmo dos últimos 12 meses. Sem informação de cliente.</p>
+      <p id="subtitulo">Lotes que vencem nos próximos 90 dias, com a projeção de quanto deve vencer sem ser vendido no ritmo dos últimos 12 meses. Uso interno — não compartilhe a senha fora do time.</p>
       <button class="theme-toggle" id="themeToggle" type="button">Alternar tema</button>
     </header>
-    <main>
+    <form id="telaSenha" autocomplete="on">
+      <h2>Acesso restrito</h2>
+      <p>Painel interno do Grupo Pigatto. Digite a senha fornecida pela gestão.</p>
+      <input type="password" id="campoSenha" placeholder="Senha" autocomplete="current-password" required />
+      <button type="submit" id="botaoSenha">Entrar</button>
+      <p id="erroSenha"></p>
+    </form>
+    <main id="conteudo" hidden>
       <div id="bannerExemplo" class="banner-exemplo" hidden>
         Estes são dados de exemplo. O GitHub Action ainda não rodou com as credenciais do Omie configuradas — veja o README do repositório.
       </div>
@@ -224,6 +245,30 @@
         <div class="card">
           <h2>Lotes por risco de perda</h2>
           <canvas id="chartRisco"></canvas>
+        </div>
+      </section>
+
+      <section class="clientes-card" id="clientes">
+        <h2>Potenciais clientes por produto</h2>
+        <p class="sub">Escolha um produto (ou clique numa linha da tabela abaixo) para ver quem comprou nos últimos 12 meses.</p>
+        <select id="seletorProduto"><option value="">Selecione um produto…</option></select>
+        <div id="clientesResumo" class="sub"></div>
+        <div style="overflow-x:auto">
+          <table id="tabelaClientes" hidden>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Cidade</th>
+                <th>Qtd. 12 meses</th>
+                <th>Última compra</th>
+                <th>Vendedor</th>
+                <th>Contato</th>
+                <th>Telefone</th>
+                <th>E-mail</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaClientesBody"></tbody>
+          </table>
         </div>
       </section>
 
@@ -250,7 +295,6 @@
             <thead>
               <tr>
                 <th data-key="produto">Produto</th>
-                <th data-key="familia">Família</th>
                 <th data-key="lote">Lote</th>
                 <th data-key="validade">Validade</th>
                 <th data-key="dias_restantes">Dias p/ vencer</th>
@@ -259,17 +303,19 @@
                 <th data-key="dias_para_vender">Dias p/ vender</th>
                 <th data-key="saldo_em_risco">Saldo em risco</th>
                 <th data-key="risco">Risco</th>
+                <th data-key="cmc">CMC unit.</th>
+                <th data-key="perda_estimada">Perda estimada</th>
               </tr>
             </thead>
             <tbody id="tabelaLotesBody"></tbody>
           </table>
         </div>
-        <p class="nota">Projeção pelo ritmo médio de vendas faturadas dos últimos 12 meses, supondo que o lote que vence antes sai antes. "Saldo em risco" é a quantidade que deve sobrar na data de validade, na unidade do produto. Não considera sazonalidade nem pedidos pontuais.</p>
+        <p class="nota">Projeção pelo ritmo médio de vendas faturadas dos últimos 12 meses, supondo que o lote que vence antes sai antes. "Saldo em risco" é a quantidade que deve sobrar na data de validade, na unidade do produto. "Perda estimada" = saldo em risco × CMC. Não considera sazonalidade nem pedidos pontuais.</p>
       </section>
     </main>
     <footer>
-      Painel gerado automaticamente a partir do Omie (<span id="geradoEm">—</span>). Lotes já vencidos não aparecem aqui: são tratados pela operação. Dados de clientes (nome, telefone, e-mail) não aparecem aqui — ficam só na planilha interna de uso do time comercial.
-      Os e-mails quinzenais de alerta continuam sendo enviados normalmente para avisos urgentes; este painel é a visão completa, atualizada automaticamente.
+      Painel gerado automaticamente a partir do Omie (<span id="geradoEm">—</span>). Lotes já vencidos não aparecem aqui: são tratados pela operação.
+      Dados internos e confidenciais do Grupo Pigatto (clientes, custos): uso exclusivo do time, não compartilhe a senha nem prints fora da empresa.
     </footer>
   </div>
 
@@ -333,6 +379,60 @@ document.getElementById("themeToggle").addEventListener("click", () => {
 let dadosGlobais = null;
 let graficos = {};
 
+function formatarReais(n) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+let produtoSelecionado = "";
+
+function montarSeletorProdutos(dados) {
+  const sel = document.getElementById("seletorProduto");
+  const produtos = Object.entries(dados.produtos || {})
+    .sort((a, b) => a[1].produto.localeCompare(b[1].produto, "pt-BR"));
+  produtos.forEach(([cod, p]) => {
+    const opt = document.createElement("option");
+    opt.value = cod;
+    opt.textContent = `${p.produto} (${p.clientes.length} cliente${p.clientes.length === 1 ? "" : "s"})`;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener("change", () => selecionarProduto(sel.value, false));
+}
+
+function selecionarProduto(cod, rolar) {
+  produtoSelecionado = cod;
+  document.getElementById("seletorProduto").value = cod;
+  const p = (dadosGlobais.produtos || {})[cod];
+  const tabela = document.getElementById("tabelaClientes");
+  const resumo = document.getElementById("clientesResumo");
+  if (!p) {
+    tabela.hidden = true;
+    resumo.textContent = "";
+  } else {
+    const lotes = dadosGlobais.lotes.filter(l => l.cod === cod);
+    const emRisco = lotes.reduce((s, l) => s + (l.saldo_em_risco || 0), 0);
+    resumo.innerHTML = `${lotes.length} lote${lotes.length === 1 ? "" : "s"} na janela de 90 dias · saldo em risco ${formatarNumero(emRisco)} ${esc(p.unidade)}` +
+      (p.clientes.length ? "" : " · <b>nenhum cliente comprou este produto nos últimos 12 meses</b>");
+    document.getElementById("tabelaClientesBody").innerHTML = p.clientes.map(c => `
+      <tr>
+        <td>${esc(c.razao_social)}${c.nome_fantasia && c.nome_fantasia !== c.razao_social ? `<br><span style="color:var(--text-muted);font-size:12px">${esc(c.nome_fantasia)}</span>` : ""}</td>
+        <td>${esc(c.cidade)}</td>
+        <td class="num">${formatarNumero(c.qtd_12m)} ${esc(p.unidade)}</td>
+        <td>${esc(c.ultima_compra)}</td>
+        <td>${esc(c.vendedor)}</td>
+        <td>${esc(c.contato)}</td>
+        <td style="white-space:nowrap">${esc(c.telefone)}</td>
+        <td>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""}</td>
+      </tr>`).join("");
+    tabela.hidden = p.clientes.length === 0;
+  }
+  renderTabela();
+  if (rolar) document.getElementById("clientes").scrollIntoView({ behavior: "smooth" });
+}
+
 function formatarNumero(n) {
   return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(n);
 }
@@ -345,12 +445,13 @@ function montarKpis(kpis) {
     { chave: "lotes_risco_parcial", label: "Risco parcial", classe: "orange" },
     { chave: "lotes_sem_giro", label: "Sem giro (12 meses)", classe: "violet" },
     { chave: "lotes_vende_a_tempo", label: "Vende a tempo", classe: "aqua" },
+    { chave: "perda_estimada_total", label: "Perda estimada (R$)", classe: "red", reais: true },
   ];
   const el = document.getElementById("kpis");
   el.innerHTML = defs.map(d => `
     <div class="kpi ${d.classe}">
       <div class="label">${d.label}</div>
-      <div class="value">${formatarNumero(kpis[d.chave] ?? 0)}</div>
+      <div class="value">${d.reais ? formatarReais(kpis[d.chave] ?? 0) : formatarNumero(kpis[d.chave] ?? 0)}</div>
     </div>
   `).join("");
 }
@@ -457,9 +558,8 @@ function renderTabela() {
   const linhas = linhasFiltradas();
   const corpo = document.getElementById("tabelaLotesBody");
   corpo.innerHTML = linhas.map(l => `
-    <tr class="${classeLinha(l.situacao)}">
-      <td class="produto">${l.produto}</td>
-      <td>${l.familia}</td>
+    <tr class="${classeLinha(l.situacao)} clicavel${l.cod === produtoSelecionado ? " selecionado" : ""}" data-cod="${esc(l.cod)}">
+      <td class="produto">${esc(l.produto)}</td>
       <td>${l.lote ?? ""}</td>
       <td>${l.validade ?? ""}</td>
       <td class="num situacao">${l.dias_restantes}</td>
@@ -468,6 +568,8 @@ function renderTabela() {
       <td class="num">${l.dias_para_vender ?? "—"}</td>
       <td class="num">${l.saldo_em_risco !== undefined ? formatarNumero(l.saldo_em_risco) + " " + (l.unidade ?? "") : "—"}</td>
       <td>${l.risco ? `<span class="risco ${CLASSE_RISCO[l.risco] || ""}">${l.risco}</span>` : "—"}</td>
+      <td class="num">${l.cmc ? formatarReais(l.cmc) : "—"}</td>
+      <td class="num">${l.perda_estimada === null || l.perda_estimada === undefined ? "—" : formatarReais(l.perda_estimada)}</td>
     </tr>
   `).join("");
 }
@@ -490,28 +592,77 @@ document.querySelectorAll("#tabelaLotes th").forEach(th => {
     renderTabela();
   });
 });
+document.getElementById("tabelaLotesBody").addEventListener("click", ev => {
+  const tr = ev.target.closest("tr[data-cod]");
+  if (tr) selecionarProduto(tr.dataset.cod, true);
+});
 ["filtroProduto", "filtroFamilia", "filtroSituacao", "filtroRisco"].forEach(id => {
   document.getElementById(id).addEventListener("input", renderTabela);
 });
 
-async function carregar() {
-  const resp = await fetch("./data.json", { cache: "no-store" });
-  const dados = await resp.json();
-  dadosGlobais = dados;
+function b64(s) {
+  return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+}
 
+async function descriptografar(pacote, senha) {
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(senha), "PBKDF2", false, ["deriveKey"]);
+  const chave = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64(pacote.salt), iterations: pacote.iter, hash: "SHA-256" },
+    base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]
+  );
+  const texto = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(pacote.iv) }, chave, b64(pacote.dados));
+  return JSON.parse(new TextDecoder().decode(texto));
+}
+
+function exibir(dados) {
+  dadosGlobais = dados;
+  document.getElementById("telaSenha").hidden = true;
+  document.getElementById("conteudo").hidden = false;
   document.getElementById("bannerExemplo").hidden = !dados.exemplo;
   document.getElementById("geradoEm").textContent = new Date(dados.gerado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
-
   montarKpis(dados.kpis);
   montarFiltros(dados.lotes);
+  montarSeletorProdutos(dados);
   try { redesenharGraficos(); } catch (e) { console.error("Falha ao desenhar gráficos:", e); }
   try { renderTabela(); } catch (e) { console.error("Falha ao montar tabela:", e); }
 }
 
-carregar().catch(err => {
-  console.error("Falha ao carregar data.json:", err);
-  document.getElementById("kpis").innerHTML = `<p style="color:var(--red)">Não foi possível carregar data.json: ${err}</p>`;
+async function tentarSenha(senha, silencioso) {
+  const erro = document.getElementById("erroSenha");
+  const botao = document.getElementById("botaoSenha");
+  botao.disabled = true;
+  erro.textContent = silencioso ? "" : "Verificando…";
+  try {
+    const resp = await fetch("./data.enc.json", { cache: "no-store" });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const pacote = await resp.json();
+    let dados;
+    try {
+      dados = await descriptografar(pacote, senha);
+    } catch (e) {
+      try { sessionStorage.removeItem("painel-senha"); } catch (_) { /* ignorar */ }
+      erro.textContent = silencioso ? "" : "Senha incorreta.";
+      return;
+    }
+    try { sessionStorage.setItem("painel-senha", senha); } catch (_) { /* ignorar */ }
+    exibir(dados);
+  } catch (e) {
+    erro.textContent = `Não foi possível carregar os dados: ${e.message}`;
+  } finally {
+    botao.disabled = false;
+  }
+}
+
+document.getElementById("telaSenha").addEventListener("submit", ev => {
+  ev.preventDefault();
+  tentarSenha(document.getElementById("campoSenha").value, false);
 });
+
+try {
+  const salva = sessionStorage.getItem("painel-senha");
+  if (salva) tentarSenha(salva, true);
+} catch (_) { /* sessionStorage indisponível: pede a senha */ }
+document.getElementById("campoSenha").focus();
 </script>
 </body>
 </html>

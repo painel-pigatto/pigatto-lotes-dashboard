@@ -21,6 +21,7 @@ IMPORTANTE — status de cada parte desta integração:
     a conta real em 14/10/2026.
 """
 
+import base64
 import json
 import os
 import sys
@@ -222,8 +223,8 @@ def calcular_cobertura(lotes: list, qtd_por_produto: dict) -> None:
 
 def buscar_vendas_12_meses(produtos_n_cod: set):
     """
-    Soma a quantidade vendida nos últimos 12 meses por produto. Nenhum dado de
-    cliente é lido para o painel.
+    Soma, por produto, a quantidade vendida nos últimos 12 meses e o que cada
+    cliente comprou (quantidade, última compra, vendedor do último pedido).
 
     Endpoint produtos/pedido, chamada ListarPedidos (validado contra a conta
     real em 14/10/2026). Considera apenas pedidos faturados e não cancelados.
@@ -232,6 +233,8 @@ def buscar_vendas_12_meses(produtos_n_cod: set):
     desde = hoje - timedelta(days=JANELA_VENDAS_DIAS)
 
     qtd_por_produto: dict = {}
+    # {n_cod_produto: {codigo_cliente: {"qtd", "ultima_compra" (date), "cod_vendedor"}}}
+    clientes_por_produto: dict = {}
 
     pagina = 1
     while True:
@@ -255,6 +258,10 @@ def buscar_vendas_12_meses(produtos_n_cod: set):
             info = pedido.get("infoCadastro", {}) or {}
             if info.get("cancelado") == "S" or info.get("faturado") != "S":
                 continue
+            cabecalho = pedido.get("cabecalho", {}) or {}
+            cod_cliente = cabecalho.get("codigo_cliente")
+            data_pedido = parse_data_omie(info.get("dFat")) or parse_data_omie(cabecalho.get("data_previsao"))
+            cod_vendedor = (pedido.get("informacoes_adicionais", {}) or {}).get("codVend")
             for item in pedido.get("det", []) or []:
                 prod = item.get("produto", {}) or {}
                 n_cod = prod.get("codigo_produto")
@@ -262,13 +269,92 @@ def buscar_vendas_12_meses(produtos_n_cod: set):
                     continue
                 qtd = float(prod.get("quantidade", 0) or 0)
                 qtd_por_produto[n_cod] = qtd_por_produto.get(n_cod, 0) + qtd
+                if cod_cliente is None:
+                    continue
+                c = clientes_por_produto.setdefault(n_cod, {}).setdefault(
+                    cod_cliente, {"qtd": 0.0, "ultima_compra": None, "cod_vendedor": None}
+                )
+                c["qtd"] += qtd
+                if data_pedido and (c["ultima_compra"] is None or data_pedido >= c["ultima_compra"]):
+                    c["ultima_compra"] = data_pedido
+                    c["cod_vendedor"] = cod_vendedor or c["cod_vendedor"]
 
         total_paginas = data.get("total_de_paginas", pagina)
         if pagina >= total_paginas:
             break
         pagina += 1
 
-    return qtd_por_produto
+    return qtd_por_produto, clientes_por_produto
+
+
+def buscar_cliente(cod_cliente) -> dict:
+    """Dados cadastrais do cliente para o comercial (painel protegido por senha)."""
+    try:
+        c = omie_call("geral/clientes", "ConsultarCliente", {"codigo_cliente_omie": cod_cliente})
+    except Exception:  # noqa: BLE001 - um cadastro com problema não derruba a execução
+        return {"razao_social": f"Cliente {cod_cliente}"}
+    ddd = (c.get("telefone1_ddd") or "").strip()
+    fone = (c.get("telefone1_numero") or "").strip()
+    cidade = (c.get("cidade") or "").strip()
+    uf = (c.get("estado") or "").strip()
+    return {
+        "razao_social": (c.get("razao_social") or c.get("nome_fantasia") or f"Cliente {cod_cliente}").strip(),
+        "nome_fantasia": (c.get("nome_fantasia") or "").strip(),
+        "cidade": f"{cidade}/{uf}" if cidade and uf else cidade or uf,
+        "contato": (c.get("contato") or "").strip(),
+        "telefone": f"({ddd}) {fone}" if ddd and fone else fone,
+        "email": (c.get("email") or "").strip(),
+    }
+
+
+def buscar_vendedores() -> dict:
+    """Mapa código -> nome dos vendedores."""
+    vendedores: dict = {}
+    pagina = 1
+    while True:
+        data = omie_call(
+            "geral/vendedores",
+            "ListarVendedores",
+            {"pagina": pagina, "registros_por_pagina": 100, "apenas_importado_api": "N"},
+        )
+        for v in data.get("cadastro", []) or []:
+            vendedores[v.get("codigo")] = (v.get("nome") or "").strip()
+        if pagina >= data.get("total_de_paginas", pagina):
+            break
+        pagina += 1
+    return vendedores
+
+
+def buscar_cmc(produtos_n_cod: set) -> dict:
+    """Custo médio contábil (CMC) unitário por produto, via posição de estoque de hoje."""
+    hoje = datetime.now(ZoneInfo("America/Sao_Paulo")).date()
+    cmc: dict = {}
+    pagina = 1
+    while True:
+        data = omie_call(
+            "estoque/consulta",
+            "ListarPosEstoque",
+            {
+                "nPagina": pagina,
+                "nRegPorPagina": 100,
+                "dDataPosicao": hoje.strftime("%d/%m/%Y"),
+                "cExibeTodos": "N",
+                "codigo_local_estoque": 0,
+            },
+        )
+        itens = data.get("produtos", []) or []
+        if pagina == 1 and itens and "nCMC" not in itens[0]:
+            print(f"AVISO: ListarPosEstoque sem campo nCMC; campos recebidos: {sorted(itens[0].keys())}",
+                  file=sys.stderr)
+        for p in itens:
+            n_cod = p.get("nCodProd")
+            valor = p.get("nCMC")
+            if n_cod in produtos_n_cod and valor:
+                cmc[n_cod] = float(valor)
+        if pagina >= data.get("nTotPaginas", pagina):
+            break
+        pagina += 1
+    return cmc
 
 
 def montar_dashboard():
@@ -283,7 +369,7 @@ def montar_dashboard():
     produtos_n_cod = {l["n_cod_produto"] for l in lotes if l["n_cod_produto"] is not None}
 
     try:
-        qtd_por_produto = buscar_vendas_12_meses(produtos_n_cod)
+        qtd_por_produto, clientes_por_produto = buscar_vendas_12_meses(produtos_n_cod)
     except Exception as exc:  # noqa: BLE001
         print(f"ERRO: falha ao buscar vendas dos últimos 12 meses ({exc}). "
               f"Sem vendas a projeção de risco ficaria errada; data.json não foi atualizado.",
@@ -291,6 +377,48 @@ def montar_dashboard():
         raise SystemExit(1)  # sem vendas a projeção de risco ficaria errada; melhor falhar visível
 
     calcular_cobertura(lotes, qtd_por_produto)
+
+    try:
+        cmc_por_produto = buscar_cmc(produtos_n_cod)
+    except Exception as exc:  # noqa: BLE001 - sem CMC o painel sai sem R$, mas sai
+        print(f"AVISO: falha ao buscar CMC ({exc}). Painel publicado sem valores em R$.", file=sys.stderr)
+        cmc_por_produto = {}
+    sem_cmc = sorted({l["produto"] for l in lotes if l["n_cod_produto"] not in cmc_por_produto})
+    if sem_cmc:
+        print(f"AVISO: {len(sem_cmc)} produto(s) sem CMC: {sem_cmc}", file=sys.stderr)
+    for lote in lotes:
+        cmc = cmc_por_produto.get(lote["n_cod_produto"])
+        lote["cmc"] = round(cmc, 4) if cmc else None
+        lote["perda_estimada"] = round(lote["saldo_em_risco"] * cmc, 2) if cmc else None
+
+    try:
+        vendedores = buscar_vendedores()
+    except Exception as exc:  # noqa: BLE001
+        print(f"AVISO: falha ao buscar vendedores ({exc}).", file=sys.stderr)
+        vendedores = {}
+    cache_clientes: dict = {}
+    produtos = {}
+    for lote in lotes:
+        n_cod = lote["n_cod_produto"]
+        if n_cod in produtos:
+            continue
+        clientes = []
+        for cod_cliente, c in clientes_por_produto.get(n_cod, {}).items():
+            if cod_cliente not in cache_clientes:
+                cache_clientes[cod_cliente] = buscar_cliente(cod_cliente)
+            clientes.append({
+                **cache_clientes[cod_cliente],
+                "qtd_12m": round(c["qtd"], 2),
+                "ultima_compra": c["ultima_compra"].strftime("%d/%m/%Y") if c["ultima_compra"] else "",
+                "vendedor": vendedores.get(c["cod_vendedor"], ""),
+            })
+        clientes.sort(key=lambda x: x["qtd_12m"], reverse=True)
+        produtos[str(n_cod)] = {
+            "produto": lote["produto"],
+            "unidade": lote["unidade"],
+            "cmc": lote["cmc"],
+            "clientes": clientes,
+        }
 
     # KPIs — só contagens de lotes: somar saldos misturaria kg, litros e bisnagas.
     contagem_risco = {r: 0 for r in ORDEM_RISCO}
@@ -303,6 +431,8 @@ def montar_dashboard():
         "lotes_risco_parcial": contagem_risco["Risco parcial"],
         "lotes_sem_giro": contagem_risco["Sem giro"],
         "lotes_vende_a_tempo": contagem_risco["Vende a tempo"],
+        "perda_estimada_total": round(sum(l["perda_estimada"] or 0 for l in lotes), 2),
+        "lotes_sem_cmc": len([l for l in lotes if l["cmc"] is None]),
     }
 
     # Por família
@@ -324,6 +454,7 @@ def montar_dashboard():
     detalhe_lotes = sorted(
         (
             {
+                "cod": str(l["n_cod_produto"]),
                 "produto": l["produto"],
                 "familia": l["familia"],
                 "lote": l["lote"],
@@ -337,6 +468,8 @@ def montar_dashboard():
                 "dias_para_vender": l["dias_para_vender"],
                 "saldo_em_risco": l["saldo_em_risco"],
                 "risco": l["risco"],
+                "cmc": l["cmc"],
+                "perda_estimada": l["perda_estimada"],
             }
             for l in lotes
         ),
@@ -350,17 +483,45 @@ def montar_dashboard():
         "por_familia": por_familia,
         "por_urgencia": por_urgencia,
         "por_risco": por_risco,
+        "produtos": produtos,
         "lotes": detalhe_lotes,
     }
 
 
+PBKDF2_ITERACOES = 600_000
+
+
+def criptografar(dados: dict, senha: str) -> dict:
+    """
+    AES-256-GCM com chave derivada da senha por PBKDF2-SHA256. O navegador
+    refaz a mesma derivação (WebCrypto) para abrir os dados em docs/index.html.
+    """
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+    salt = os.urandom(16)
+    iv = os.urandom(12)
+    chave = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=PBKDF2_ITERACOES).derive(
+        senha.encode("utf-8")
+    )
+    texto = json.dumps(dados, ensure_ascii=False).encode("utf-8")
+    cifrado = AESGCM(chave).encrypt(iv, texto, None)
+    b64 = lambda b: base64.b64encode(b).decode("ascii")  # noqa: E731
+    return {"v": 1, "kdf": "PBKDF2-SHA256", "iter": PBKDF2_ITERACOES, "salt": b64(salt), "iv": b64(iv), "dados": b64(cifrado)}
+
+
 def main():
+    senha = os.environ.get("PAINEL_SENHA", "")
+    if len(senha) < 12:
+        print("ERRO: secret PAINEL_SENHA ausente ou com menos de 12 caracteres. "
+              "Cadastre em Settings > Secrets and variables > Actions (ver README.md).", file=sys.stderr)
+        sys.exit(1)
     dashboard = montar_dashboard()
-    out_path = os.path.join(os.path.dirname(__file__), "..", "docs", "data.json")
-    out_path = os.path.abspath(out_path)
+    out_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "docs", "data.enc.json"))
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(dashboard, f, ensure_ascii=False, indent=2)
-    print(f"OK: {out_path} gerado com {len(dashboard['lotes'])} lotes.")
+        json.dump(criptografar(dashboard, senha), f)
+    print(f"OK: {out_path} gerado (criptografado) com {len(dashboard['lotes'])} lotes.")
 
 
 if __name__ == "__main__":

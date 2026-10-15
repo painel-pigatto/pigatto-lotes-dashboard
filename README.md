@@ -1,18 +1,20 @@
 # Painel Comercial — Produtos a Vencer (Grupo Pigatto)
 
-Dashboard público, estático e **anonimizado** (sem nome/telefone/e-mail de
-cliente) com os lotes a vencer/vencidos e as vendas dos últimos 12 meses,
-publicado no GitHub Pages e atualizado automaticamente uma vez por dia via
-GitHub Actions, puxando os dados direto da API do Omie.
+Painel interno, **protegido por senha**, com os lotes que vencem nos próximos
+90 dias, o risco de cada um vencer sem ser vendido, o CMC, a perda estimada em
+R$ e os potenciais clientes de cada produto. Publicado no GitHub Pages e
+atualizado automaticamente uma vez por dia via GitHub Actions, puxando os
+dados direto da API do Omie.
 
+> **Como a senha protege os dados.** O site é estático e o repositório é
+> público, então os dados nunca são publicados abertos: o workflow grava
+> `docs/data.enc.json` criptografado com AES-256-GCM (chave derivada da senha
+> por PBKDF2-SHA256, 600 mil iterações). O navegador só consegue abrir os
+> dados com a senha. A senha fica apenas no secret `PAINEL_SENHA`.
+>
 > **Complementar aos e-mails de alerta.** Os rascunhos quinzenais de e-mail
-> (90 dias e vencidos) continuam sendo gerados normalmente pela tarefa
-> agendada do Claude — eles seguem como o alerta urgente que vai para a caixa
-> de entrada. Este dashboard é a visão completa, detalhada e sempre
-> atualizada, para quem quiser consultar a qualquer momento sem esperar o
-> próximo e-mail. Os clientes candidatos a contatar por produto, com nome,
-> telefone e e-mail, continuam só na planilha interna do Google Sheets — de
-> propósito, não entram aqui por serem dados comerciais sensíveis.
+> continuam sendo gerados pela tarefa agendada do Claude. A política comercial
+> de descontos fica só no e-mail interno, não neste painel.
 
 ## Estrutura do repositório
 
@@ -20,11 +22,11 @@ GitHub Actions, puxando os dados direto da API do Omie.
 .
 ├── .github/workflows/update-dashboard.yml   # roda 1x por dia (e sob demanda)
 ├── scripts/
-│   ├── fetch_omie_data.py                   # busca dados no Omie e gera docs/data.json
+│   ├── fetch_omie_data.py                   # busca dados no Omie e gera docs/data.enc.json
 │   └── requirements.txt
 └── docs/
     ├── index.html                           # o dashboard em si (HTML/CSS/JS puro, sem build)
-    └── data.json                            # dados gerados pelo workflow (tem um exemplo aqui agora)
+    └── data.enc.json                        # dados criptografados gerados pelo workflow
 ```
 
 ## Passo a passo para publicar
@@ -39,9 +41,11 @@ GitHub Actions, puxando os dados direto da API do Omie.
      secret**.
    - Crie `OMIE_APP_KEY` com o App Key da integração "OMIE — Grupo Pigatto".
    - Crie `OMIE_APP_SECRET` com o App Secret correspondente.
+   - Crie `PAINEL_SENHA` com a senha do painel (mínimo 12 caracteres; use
+     4 ou mais palavras aleatórias, ex.: `cobalto-janela-tigre-mesa`).
 
 3. **Habilite permissão de escrita para o GitHub Actions** (necessária para o
-   workflow conseguir fazer commit do `docs/data.json` atualizado):
+   workflow conseguir fazer commit do `docs/data.enc.json` atualizado):
    - **Settings → Actions → General → Workflow permissions** → selecione
      **"Read and write permissions"** → Salvar.
 
@@ -55,7 +59,7 @@ GitHub Actions, puxando os dados direto da API do Omie.
 
 5. **Rode o workflow manualmente uma vez** antes de esperar pelo agendamento
    automático: aba **Actions → Atualizar Dashboard de Lotes a Vencer → Run
-   workflow**. Confira os logs e o conteúdo gerado em `docs/data.json`.
+   workflow**. Confira os logs e abra o painel com a senha.
 
 6. Depois disso, o workflow roda sozinho **todo dia às 08:00 (horário de
    Brasília)** e também pode ser disparado manualmente a qualquer momento pela
@@ -82,10 +86,11 @@ giro* (nenhuma venda em 12 meses).
 de vencidos, tratado pela operação. É uma projeção pela média: não
 prevê sazonalidade nem pedidos pontuais.
 
-**Nunca mostra** nome, telefone, e-mail ou razão social de nenhum cliente —
-isso ficou de fora de propósito, porque este dashboard é público. Essa parte
-(quem contatar para cada produto) continua só na planilha interna "Produtos a
-vencer" no Google Sheets, de acesso restrito ao Grupo Pigatto.
+**Potenciais clientes:** escolha um produto (ou clique numa linha da tabela)
+para ver quem o comprou nos últimos 12 meses — razão social, cidade,
+quantidade, última compra, vendedor, contato, telefone e e-mail (cadastro do
+Omie). **CMC e perda estimada** vêm da posição de estoque do Omie
+(`ListarPosEstoque`); produtos sem CMC aparecem com "—" e ficam fora do total.
 
 ## Pontos de atenção antes de confiar 100% nos números
 
@@ -96,27 +101,28 @@ vencer" no Google Sheets, de acesso restrito ao Grupo Pigatto.
 - A busca de **vendas dos últimos 12 meses** (`ListarPedidos`, endpoint
   `produtos/pedido`) foi conferida contra a conta real em 14/10/2026 e conta
   só pedidos faturados e não cancelados. Se essa busca falhar, o workflow fica
-  vermelho e o `data.json` anterior é mantido, para não publicar risco errado.
-- O `docs/data.json` incluído agora é um **exemplo** (`"exemplo": true`), só
-  para o dashboard não ficar em branco antes da primeira execução real. Ele
-  tem os mesmos números já verificados na planilha interna em 09/10/2026. O
-  banner laranja no topo do dashboard desaparece sozinho assim que o workflow
-  gerar dados reais (que não têm o campo `"exemplo"`).
+  vermelho e o `data.enc.json` anterior é mantido, para não publicar risco errado.
+- O CMC (`ListarPosEstoque`, campo `nCMC`), os dados de cliente
+  (`ConsultarCliente`) e os vendedores (`ListarVendedores`) ainda não foram
+  conferidos contra a conta real. Na primeira execução, compare 2 ou 3
+  produtos com o Omie; se o log mostrar "AVISO: ListarPosEstoque sem campo
+  nCMC", o nome do campo precisa de ajuste.
 
 ## Segurança
 
 - A chave do Omie nunca aparece em nenhum arquivo deste repositório — só
   existe como Secret do GitHub, acessível apenas durante a execução do
   workflow.
-- Nenhum dado de cliente (nome/telefone/e-mail) é buscado ou gravado por este
-  script — a função de vendas só soma quantidades e conta códigos internos de
-  cliente para gerar uma contagem (nunca grava o código em si no JSON
-  público).
-- Se decidir restringir o acesso ao dashboard mais adiante (em vez de
-  público-anonimizado), as opções mais simples são: tornar o repositório
-  privado e publicar o Pages via GitHub Enterprise (permite Pages privado), ou
-  colocar o `docs/` atrás de um proxy simples com autenticação (ex.:
-  Cloudflare Access na frente do domínio do GitHub Pages).
+- Os dados (clientes, custos) só existem no repositório criptografados.
+  Quem não tem a senha vê apenas a tela de login.
+- **Troque a senha sempre que alguém do time sair da empresa**: altere o
+  secret `PAINEL_SENHA` e rode o workflow. Versões antigas de
+  `data.enc.json` continuam no histórico do Git cifradas com a senha
+  antiga — por isso a troca deve ser imediata e a senha antiga nunca
+  reaproveitada.
+- Compartilhe a senha só por canal interno. Para controle individual de
+  acesso (login por e-mail, registro de quem acessou), a evolução natural é
+  Cloudflare Pages + Cloudflare Access.
 
 ## Rotina de alerta por e-mail
 
