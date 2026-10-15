@@ -24,14 +24,15 @@ jobs:
       - name: Instalar dependências
         run: pip install -r scripts/requirements.txt
 
-      - name: Buscar dados no Omie e gerar docs/data.json
+      - name: Buscar dados no Omie e gerar docs/data.enc.json (criptografado)
         env:
           OMIE_APP_KEY: ${{ secrets.OMIE_APP_KEY }}
           OMIE_APP_SECRET: ${{ secrets.OMIE_APP_SECRET }}
+          PAINEL_SENHA: ${{ secrets.PAINEL_SENHA }}
         run: python scripts/fetch_omie_data.py
 
       - name: Publicar dados atualizados (commit automático)
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Atualiza dados do dashboard (automático)"
-          file_pattern: docs/data.json
+          file_pattern: docs/data.enc.json
