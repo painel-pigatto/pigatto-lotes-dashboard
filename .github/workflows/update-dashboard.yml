@@ -2,8 +2,9 @@ name: Atualizar Dashboard de Lotes a Vencer
 
 on:
   schedule:
-    # 08:00 horário de Brasília (UTC-3) todo dia = 11:00 UTC
-    - cron: '0 11 * * *'
+    # Agendado para 07:15 de Brasília (10:15 UTC): o GitHub costuma iniciar
+    # agendamentos com 15–25 min de atraso, então os dados ficam prontos antes das 8h.
+    - cron: '15 10 * * *'
   workflow_dispatch: {}   # permite rodar manualmente em Actions > Run workflow
 
 permissions:
