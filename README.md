@@ -61,9 +61,11 @@ dados direto da API do Omie.
    automático: aba **Actions → Atualizar Dashboard de Lotes a Vencer → Run
    workflow**. Confira os logs e abra o painel com a senha.
 
-6. Depois disso, o workflow roda sozinho **todo dia às 08:00 (horário de
-   Brasília)** e também pode ser disparado manualmente a qualquer momento pela
-   mesma tela de Actions.
+6. Depois disso, o workflow roda sozinho **todo dia antes das 08:00 (horário
+   de Brasília)** — agendado para 07:15 porque o GitHub atrasa o início em
+   15–25 min. Também pode ser disparado manualmente a qualquer momento pela
+   mesma tela de Actions. Páginas que ficam abertas (ex.: TV) buscam os dados
+   novos sozinhas a cada 30 min.
 
 ## O que este dashboard mostra (e o que não mostra)
 

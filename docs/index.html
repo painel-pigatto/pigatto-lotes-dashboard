@@ -142,14 +142,16 @@
   }
   th[data-key] { cursor: pointer; user-select: none; }
   th[data-key]:hover { background: var(--navy3); }
-  td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  td { padding: 10px 7px; border-bottom: 1px solid var(--line); vertical-align: middle; }
   tbody tr:nth-child(even) td { background: #FAFCFE; }
   .num, th.num { text-align: right; white-space: nowrap; }
-  td.produto { min-width: 170px; font-weight: 500; }
+  td.produto { min-width: 160px; font-weight: 500; }
   tr.clicavel { cursor: pointer; }
   tr.clicavel:hover td { background: var(--row-hover); }
   tr.selecionado td { background: var(--row-hover) !important; box-shadow: inset 0 0 0 0 transparent; }
   tr.selecionado td:first-child { box-shadow: inset 4px 0 0 var(--orange); }
+  .op { display: block; font-weight: 600; white-space: nowrap; }
+  .mp { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.45; white-space: nowrap; }
   .dias-urg { color: var(--red); font-weight: 700; }
   .dias-med { color: var(--amber); font-weight: 700; }
   .total td { font-weight: 700; background: #EEF4FA !important; }
@@ -172,10 +174,10 @@
   .nota { color: var(--muted); font-size: 12px; margin: 12px 0 0; line-height: 1.5; }
   footer { color: var(--muted); font-size: 12px; line-height: 1.6; }
 
-  @media (max-width: 1420px) {
+  @media (max-width: 1500px) {
     .col-cmc { display: none; }
   }
-  @media (max-width: 1320px) {
+  @media (max-width: 1400px) {
     .col-dv { display: none; }
     .sidebar { width: 196px; }
   }
@@ -221,7 +223,7 @@
     </nav>
     <div class="side-foot">
       Fonte: Omie<br />
-      Atualização diária, 08:00<br />
+      Atualização diária, até 08:00<br />
       Dados de <span id="geradoEmSide">—</span>
       <button type="button" class="sair" id="botaoSair">Sair</button>
     </div>
@@ -287,7 +289,7 @@
 
     <section class="card" id="lotes">
       <h2>Lotes</h2>
-      <p class="sub">Clique no título de uma coluna para ordenar.</p>
+      <p class="sub">Clique no título de uma coluna para ordenar. Itens de produção (bisnagas) mostram a Ordem de Produção e os lotes de matéria-prima usados.</p>
       <div class="controles">
         <input type="search" id="filtroProduto" placeholder="Buscar produto ou lote…" />
         <select id="filtroFamilia"><option value="">Todas as famílias</option></select>
@@ -407,6 +409,7 @@ function montarFamilias(lotes) {
 
 function montarSeletorProdutos(dados) {
   const sel = document.getElementById("seletorProduto");
+  sel.length = 1;
   Object.entries(dados.produtos || {})
     .sort((a, b) => a[1].produto.localeCompare(b[1].produto, "pt-BR"))
     .forEach(([cod, p]) => {
@@ -415,7 +418,11 @@ function montarSeletorProdutos(dados) {
       opt.textContent = `${p.produto} (${plural(p.clientes.length, "cliente", "clientes")})`;
       sel.appendChild(opt);
     });
-  sel.addEventListener("change", () => selecionarProduto(sel.value, false));
+  if (!sel.dataset.ligado) {
+    sel.addEventListener("change", () => selecionarProduto(sel.value, false));
+    sel.dataset.ligado = "1";
+  }
+  if (produtoSelecionado && (dados.produtos || {})[produtoSelecionado]) sel.value = produtoSelecionado;
 }
 
 function selecionarProduto(cod, rolar) {
@@ -471,13 +478,22 @@ function linhasFiltradas() {
     (!familia || l.familia === familia) &&
     (!situacao || l.situacao === situacao) &&
     (!risco || l.risco === risco) &&
-    (!termo || `${l.produto} ${l.lote}`.toLowerCase().includes(termo)));
+    (!termo || `${l.produto} ${l.lote} ${(l.lotes_mp || []).map(m => m.lote).join(" ")}`.toLowerCase().includes(termo)));
   linhas.sort((a, b) => {
     const va = valorOrdenacao(a, ordenacao.chave), vb = valorOrdenacao(b, ordenacao.chave);
     const cmp = typeof va === "number" && typeof vb === "number" ? va - vb : String(va).localeCompare(String(vb), "pt-BR");
     return ordenacao.asc ? cmp : -cmp;
   });
   return linhas;
+}
+
+function celulaLote(l) {
+  if (!l.op) return esc(l.lote);
+  const mp = l.lotes_mp || [];
+  const linhas = mp.length
+    ? mp.map(m => `<span class="mp" title="Lote de matéria-prima ${esc(m.lote)}${m.validade ? `, validade ${esc(m.validade)}` : ""}">${esc(m.lote)}${m.validade ? ` · val. ${esc(m.validade.replace(/\/(\d{2})(\d{2})$/, "/$2"))}` : ""}</span>`).join("")
+    : `<span class="mp">sem lote de matéria-prima registrado</span>`;
+  return `<span class="op">OP nº ${esc(l.op)}</span>${linhas}`;
 }
 
 function renderTabela() {
@@ -492,7 +508,7 @@ function renderTabela() {
     return `
     <tr class="clicavel${l.cod === produtoSelecionado ? " selecionado" : ""}" data-cod="${esc(l.cod)}">
       <td class="produto">${esc(l.produto)}</td>
-      <td>${esc(l.lote)}</td>
+      <td>${celulaLote(l)}</td>
       <td>${esc(l.validade)}</td>
       <td class="num ${dias}">${l.dias_restantes}</td>
       <td class="num">${formatarNumero(l.saldo)} ${esc(l.unidade)}</td>
@@ -507,11 +523,14 @@ function renderTabela() {
 
 function montarFiltros(lotes) {
   const sel = document.getElementById("filtroFamilia");
+  const atual = sel.value;
+  sel.length = 1;
   [...new Set(lotes.map(l => l.familia))].sort((a, b) => a.localeCompare(b, "pt-BR")).forEach(f => {
     const opt = document.createElement("option");
     opt.value = f; opt.textContent = f;
     sel.appendChild(opt);
   });
+  sel.value = atual;
 }
 
 document.querySelectorAll("#tabelaLotes th[data-key]").forEach(th => {
@@ -584,6 +603,23 @@ async function tentarSenha(senha, silencioso) {
     botao.disabled = false;
   }
 }
+
+// Painel aberto o dia todo (ex.: TV): a cada 30 min busca os dados de novo e,
+// se o GitHub já publicou a atualização das 8h, redesenha sem pedir senha.
+setInterval(async () => {
+  let senha = null;
+  try { senha = sessionStorage.getItem("painel-senha"); } catch (_) { /* ignorar */ }
+  if (!senha || !dadosGlobais) return;
+  try {
+    const resp = await fetch("./data.enc.json", { cache: "no-store" });
+    if (!resp.ok) return;
+    const dados = await descriptografar(await resp.json(), senha);
+    if (dados.gerado_em !== dadosGlobais.gerado_em) {
+      exibir(dados);
+      if (produtoSelecionado) selecionarProduto(produtoSelecionado, false);
+    }
+  } catch (_) { /* tenta de novo na próxima rodada */ }
+}, 30 * 60 * 1000);
 
 document.getElementById("telaSenha").addEventListener("submit", ev => {
   ev.preventDefault();

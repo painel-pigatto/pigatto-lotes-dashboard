@@ -24,6 +24,7 @@ IMPORTANTE — status de cada parte desta integração:
 import base64
 import json
 import os
+import re
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -357,10 +358,91 @@ def buscar_cmc(produtos_n_cod: set) -> dict:
     return cmc
 
 
+# Trecho "LOTE: <lote> FAB: dd/mm/aaaa VAL: dd/mm/aaaa" nas observações da OP; às
+# vezes seguido de "- OP: NNNN" e às vezes vários trechos colados sem espaço.
+RE_LOTE_MP = re.compile(
+    r"LOTE:\s*(\S+?)\s*FAB:\s*(\d{2}/\d{2}/\d{4})\s*VAL:\s*(\d{2}/\d{2}/\d{4})(?:\s*-\s*OP:\s*(\d+))?",
+    re.IGNORECASE,
+)
+
+
+def numero_op(c_num_op) -> str:
+    """'2026/05344' -> '5344'."""
+    digitos = re.findall(r"\d+", str(c_num_op or ""))
+    return str(int(digitos[-1])) if digitos else ""
+
+
+def buscar_ops(data_minima) -> dict:
+    """
+    Índice (nCodProduto, número da OP) -> {"op", "lotes_mp"} das Ordens de
+    Produção. Bisnagas e outros itens envasados usam o número da OP como lote
+    do produto acabado; os lotes de matéria-prima (normalmente dois, um de cada
+    componente) ficam nas observações da OP. Varre da página mais recente para
+    trás até passar de data_minima.
+    """
+    param = lambda p: {"pagina": p, "registros_por_pagina": 100}  # noqa: E731
+    primeira = omie_call("produtos/op", "ListarOrdemProducao", param(1))
+    total = primeira.get("total_de_paginas", 1) or 1
+    indice: dict = {}
+    for pagina in range(total, 0, -1):
+        data = primeira if pagina == 1 else omie_call("produtos/op", "ListarOrdemProducao", param(pagina))
+        # A chave da lista não é documentada de forma estável: usa a primeira
+        # lista de registros que tenha "identificacao".
+        ops = next((v for v in data.values()
+                    if isinstance(v, list) and v and isinstance(v[0], dict) and "identificacao" in v[0]), [])
+        if pagina == total and not ops:
+            print(f"AVISO: ListarOrdemProducao sem lista de OPs; chaves: {sorted(data.keys())}", file=sys.stderr)
+        datas = []
+        for op in ops:
+            ident = op.get("identificacao", {}) or {}
+            obs = (op.get("observacoes", {}) or {}).get("cObs") or ""
+            num = numero_op(ident.get("cNumOP"))
+            dt = parse_data_omie(ident.get("dDtPrevisao"))
+            if dt:
+                datas.append(dt)
+            if not num:
+                continue
+            lotes_mp, vistos = [], set()
+            for lote, _fab, val, _op in RE_LOTE_MP.findall(obs):
+                if lote not in vistos:
+                    vistos.add(lote)
+                    lotes_mp.append({"lote": lote, "validade": val})
+            indice[(ident.get("nCodProduto"), num)] = {"op": num, "lotes_mp": lotes_mp}
+        if datas and min(datas) < data_minima:
+            break
+        time.sleep(0.1)
+    return indice
+
+
+def enriquecer_com_op(lotes: list) -> None:
+    """Marca os lotes que são número de OP e anexa os lotes de matéria-prima."""
+    fabricacoes = [parse_data_omie(l["fabricacao"]) for l in lotes]
+    fabricacoes = [d for d in fabricacoes if d]
+    if not fabricacoes:
+        return
+    try:
+        indice = buscar_ops(min(fabricacoes) - timedelta(days=120))
+    except Exception as exc:  # noqa: BLE001 - sem OPs o painel sai com o lote cru
+        print(f"AVISO: falha ao buscar Ordens de Produção ({exc}).", file=sys.stderr)
+        return
+    sem_mp = 0
+    for lote in lotes:
+        num = str(int(lote["lote"])) if str(lote["lote"] or "").isdigit() else None
+        op = indice.get((lote["n_cod_produto"], num)) if num else None
+        if op:
+            lote["op"] = op["op"]
+            lote["lotes_mp"] = op["lotes_mp"]
+            sem_mp += not op["lotes_mp"]
+    com_op = sum(1 for l in lotes if l.get("op"))
+    print(f"OPs: {com_op} lote(s) de produção identificados, {sem_mp} sem lote de matéria-prima nas observações.")
+
+
 def montar_dashboard():
     # Lotes vencidos ficam fora do painel: são tratados pela operação no e-mail
     # interno de vencidos, não pelo comercial.
     lotes = [l for l in buscar_lotes() if not l["vencido"]]
+
+    enriquecer_com_op(lotes)
 
     for lote in lotes:
         lote["familia"], lote["unidade"] = buscar_produto(lote["n_cod_produto"])
@@ -458,6 +540,8 @@ def montar_dashboard():
                 "produto": l["produto"],
                 "familia": l["familia"],
                 "lote": l["lote"],
+                "op": l.get("op"),
+                "lotes_mp": l.get("lotes_mp", []),
                 "fabricacao": l["fabricacao"],
                 "validade": l["validade"],
                 "dias_restantes": l["dias_restantes"],
